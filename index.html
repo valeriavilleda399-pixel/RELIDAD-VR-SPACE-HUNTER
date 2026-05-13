@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Space Hunter - Muchos Obstáculos | Valeria Abigail Villeda Hernández</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', 'Courier New', monospace; }
+        #ui-bottom {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: rgba(0, 0, 0, 0.92); color: #0cf;
+            padding: 12px 25px; border-top: 2px solid #0cf;
+            display: flex; justify-content: space-between; align-items: center;
+            z-index: 100; font-family: 'Segoe UI', 'Orbitron', monospace; font-size: 14px;
+            backdrop-filter: blur(5px);
+            letter-spacing: 1px;
+        }
+        .key-box {
+            border: 1px solid #0cf; border-radius: 6px;
+            padding: 4px 10px; margin-right: 8px;
+            font-weight: bold; display: inline-block; min-width: 30px; text-align: center;
+            background: #000000aa; box-shadow: 0 0 4px #0cf;
+        }
+        .stat-container { display: flex; gap: 30px; font-weight: bold; font-size: 16px; text-shadow: 0 0 6px #0cf; }
+        .stat-val { color: #fff; margin-left: 5px; }
+        
+        #warning {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            color: #ff3333; font-weight: bold; font-size: 20px; z-index: 100;
+            text-shadow: 0 0 10px #ff0000; letter-spacing: 2px; text-align: center;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        #start-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #050a15 0%, #000 100%);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 200; color: #fff; font-family: 'Segoe UI', sans-serif;
+        }
+        .start-btn {
+            padding: 16px 45px; background: transparent; color: #0cf;
+            border: 2px solid #0cf; font-size: 1.3rem; cursor: pointer;
+            letter-spacing: 3px; text-transform: uppercase;
+            box-shadow: 0 0 15px #0cf; transition: 0.3s; font-weight: bold;
+            border-radius: 8px; margin-top: 20px;
+        }
+        .start-btn:hover { background: #0cf; color: black; box-shadow: 0 0 30px #0cf; }
+
+        #game-over-alert {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(10, 0, 0, 0.95); color: #ff3333;
+            padding: 40px 60px; border: 3px solid #ff3333; border-radius: 12px;
+            text-align: center; display: none; z-index: 150;
+            box-shadow: 0 0 40px #ff0000; font-family: 'Segoe UI', sans-serif;
+        }
+        .restart-btn {
+            margin-top: 25px; padding: 12px 30px; background: #ff3333; color: #fff;
+            border: none; font-size: 16px; font-weight: bold; cursor: pointer;
+            border-radius: 6px; box-shadow: 0 0 10px #ff3333; transition: 0.2s;
+        }
+        .restart-btn:hover { background: #ff6666; box-shadow: 0 0 20px #ff6666; }
+
+        #pause-btn {
+            background: transparent; border: 1px solid #0cf; color: #0cf;
+            padding: 6px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;
+            transition: 0.3s;
+        }
+        #pause-btn:hover { background: #0cf; color: #000; box-shadow: 0 0 10px #0cf; }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1 style="letter-spacing: 5px; color: #0cf; text-shadow: 0 0 10px #0cf; margin-bottom: 5px;">SPACE HUNTER</h1>
+        <p style="color: #8ab; margin-bottom: 30px;">Sistemas de Vuelo Listos</p>
+        <button class="start-btn" id="start-btn">INICIAR MISIÓN</button>
+    </div>
+
+    <div id="warning">💎 ¡MONTÓN DE OBSTÁCULOS! ESQUIVALOS 💎</div>
+
+    <div id="game-over-alert">
+        <h1 style="margin: 0 0 10px 0; letter-spacing: 3px;">MISIÓN FALLIDA</h1>
+        <p style="color: #aaa; margin: 0;">Tu nave ha sido destruida en el sector.</p>
+        <button class="restart-btn" id="restart-btn">REINTENTAR</button>
+    </div>
+
+    <div id="ui-bottom">
+        <div>
+            <span class="key-box">W</span> En el teclado avanza hacia adelante a toda velocidad
+            <span class="key-box" style="margin-left: 15px;">S</span> Frena la nave
+        </div>
+        <div class="stat-container">
+            <div>SCORE:<span id="score-val" class="stat-val">0</span></div>
+            <div>HP:<span id="hp-val" class="stat-val">3</span></div>
+            <button id="pause-btn">PAUSA</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+
+        // --------------------------------------------------------------
+        // 1. ESCENA PRINCIPAL Y CONFIGURACIÓN DEL RENDER
+        // --------------------------------------------------------------
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x020210);
+        scene.fog = new THREE.FogExp2(0x020210, 0.00004);
+
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.5, 25000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+
+        // --------------------------------------------------------------
+        // 2. CONFIGURACIÓN DE AUDIO NATIVO
+        // --------------------------------------------------------------
+        const listener = new THREE.AudioListener();
+        camera.add(listener);
+
+        const bgMusic = new Audio('./assets/audio/space_ambient.mp3');
+        bgMusic.loop = true;
+        bgMusic.volume = 0.35;
+
+        const laserSound = new Audio('./assets/audio/laser.mp3');
+        laserSound.volume = 0.28;
+
+        const enemyLaserSound = new Audio('./assets/audio/laser2.mp3');
+        enemyLaserSound.volume = 0.22;
+
+        const explosionSound = new Audio('./assets/audio/explosion.mp3');
+        explosionSound.volume = 0.45;
+
+        document.getElementById('start-btn').addEventListener('click', () => {
+            document.getElementById('start-screen').style.display = 'none';
+            bgMusic.play().catch(e => console.log("Audio de fondo en espera de interacción humana."));
+            startObstacleSpawner(); 
+        });
+
+        let isPaused = false;
+        const pauseBtn = document.getElementById('pause-btn');
+        pauseBtn.addEventListener('click', () => {
+            isPaused = !isPaused;
+            pauseBtn.innerText = isPaused ? "REANUDAR" : "PAUSA";
+            if (isPaused) {
+                bgMusic.pause();
+            } else {
+                bgMusic.play().catch(e => {});
+            }
+        });
+
+        // --------------------------------------------------------------
+        // 3. ILUMINACIÓN AMBIENTAL Y SISTEMAS LUMÍNICOS
+        // --------------------------------------------------------------
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+        scene.add(ambientLight);
+        
+        const dirLight = new THREE.DirectionalLight(0xffeedd, 2.5);
+        dirLight.position.set(300, 600, 300);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        const shipLight = new THREE.SpotLight(0x00ffff, 8.0, 6000, Math.PI / 4);
+        scene.add(shipLight);
+
+        // Sistema de Estrellas de Fondo
+        const starGeometry = new THREE.BufferGeometry();
+        const starCount = 4500;
+        const starPositions = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            starPositions[i*3] = (Math.random() - 0.5) * 22000;
+            starPositions[i*3+1] = (Math.random() - 0.5) * 14000;
+            starPositions[i*3+2] = (Math.random() - 0.5) * 12000 - 4000;
+        }
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const stars = new THREE.Points(starGeometry, new THREE.PointsMaterial({ color: 0xffffff, size: 1.8 }));
+        scene.add(stars);
+
+        // --------------------------------------------------------------
+        // 4. ENTIDAD DEL JUGADOR (NAVE GEOMÉTRICA / MODELO EXTERNO)
+        // --------------------------------------------------------------
+        let player = new THREE.Group();
+        scene.add(player);
+        
+        // Estructura procedural a escala para evitar bugs visuales antes de que descargue el FBX
+        const createProceduralShip = () => {
+            const shipGroup = new THREE.Group();
+            const bodyGeo = new THREE.ConeGeometry(2, 5, 32);
+            const bodyMat = new THREE.MeshBasicMaterial({ color: 0x3377ff }); 
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.rotation.x = Math.PI / 2;
+            shipGroup.add(body);
+            
+            const wingGeo = new THREE.BoxGeometry(6, 0.5, 2);
+            const wingMat = new THREE.MeshBasicMaterial({ color: 0x113366 });
+            const wings = new THREE.Mesh(wingGeo, wingMat);
+            wings.position.set(0, 0, -1);
+            shipGroup.add(wings);
+            
+            return shipGroup;
+        };
+        
+        let mainShip = createProceduralShip();
+        player.add(mainShip);
+
+        // CARGADOR FBX OPTIMIZADO PARA MANTENER MATERIALES VISIBLES
+        const loader = new FBXLoader();
+        const fbxPath = 'assets/models/Spaceship COLAID1 50k.fbx';
+
+        loader.load(fbxPath, (fbx) => {
+            // Remueve el marcador procedural inicial de forma segura
+            while(player.children.length) player.remove(player.children[0]);
+            
+            fbx.traverse(c => { 
+                if(c.isMesh) {
+                    c.castShadow = true;
+                    // Asegurar que las caras internas y texturas nativas se rendericen correctamente bajo cualquier ángulo
+                    if(c.material) {
+                        c.material.side = THREE.DoubleSide;
+                        if (c.material.map) c.material.map.needsUpdate = true;
+                    }
+                } 
+            });
+            
+            fbx.scale.set(0.0007, 0.0007, 0.0007);
+            fbx.rotation.set(Math.PI / 2, Math.PI, 0);
+            player.add(fbx);
+            console.log("¡Modelo de nave FBX inyectado y estabilizado con éxito!");
+        }, undefined, (err) => { 
+            console.log("Carga de FBX externa inactiva o error en ruta local. Usando modelo geométrico base.", err); 
+        });
+
+        // Configuración de arranque del jugador en la coordenada deseada
+        player.position.set(0, 0, 200);
+
+        // --------------------------------------------------------------
+        // 5. SISTEMA DE ENTIDADES ENEMIGAS Y OBSTÁCULOS DINÁMICOS
+        // --------------------------------------------------------------
+        let enemies = [];
+        let obstacles = [];
+        let score = 0;
+        let hp = 3;
+        let difficultyLevel = 1;
+        let enemySpawnMultiplier = 1;
+        let enemySpawnIntervalId = null;
+        let obstacleIntervalId = null;
+        
+        const scoreElem = document.getElementById('score-val');
+        const hpElem = document.getElementById('hp-val');
+        const gameOverAlert = document.getElementById('game-over-alert');
+        const restartBtn = document.getElementById('restart-btn');
+        
+        function updateDifficultyByScore() {
+            let newLevel = Math.floor(score / 5) + 1;
+            if (newLevel > 10) newLevel = 10;
+            
+            if (newLevel !== difficultyLevel) {
+                difficultyLevel = newLevel;
+                enemySpawnMultiplier = 1 + (difficultyLevel - 1) * 0.45;
+                
+                let warningText = document.getElementById('warning');
+                if (difficultyLevel >= 8) {
+                    warningText.innerHTML = "💀 ¡ALERTA MÁXIMA! ASTEROIDES POR TODOS LADOS 💀";
+                } else if (difficultyLevel >= 5) {
+                    warningText.innerHTML = "⚠️ CAMPO DE ASTEROIDES INTENSO | ¡ESQUIVALOS! ⚠️";
+                } else if (difficultyLevel >= 3) {
+                    warningText.innerHTML = "💎 MONTÓN DE OBSTÁCULOS | ¡CUIDADO! 💎";
+                } else {
+                    warningText.innerHTML = "💎 ¡MONTÓN DE OBSTÁCULOS! ESQUIVALOS 💎";
+                }
+                
+                restartEnemySpawnInterval();
+                restartObstacleSpawnInterval();
+            }
+        }
+        
+        function getEnemySpawnDelay() {
+            let baseDelay = 1400;
+            let reduction = (difficultyLevel - 1) * 70;
+            return Math.max(450, baseDelay - reduction);
+        }
+        
+        function getObstacleSpawnDelay() {
+            let baseDelay = 300; 
+            let reduction = (difficultyLevel - 1) * 15;
+            return Math.max(150, baseDelay - reduction);
+        }
+        
+        function getObstacleSpawnCount() {
+            let baseCount = 2;
+            let extra = Math.floor(difficultyLevel / 2);
+            return Math.min(baseCount + extra, 6);
+        }
+        
+        function restartEnemySpawnInterval() {
+            if (enemySpawnIntervalId) clearInterval(enemySpawnIntervalId);
+            const delay = getEnemySpawnDelay();
+            enemySpawnIntervalId = setInterval(() => {
+                if (!isPaused && hp > 0) {
+                    let spawnCount = Math.floor(enemySpawnMultiplier);
+                    if (Math.random() < (enemySpawnMultiplier - spawnCount)) spawnCount++;
+                    spawnCount = Math.min(spawnCount, 8);
+                    
+                    for (let i = 0; i < spawnCount; i++) spawnEnemy();
+                }
+            }, delay);
+        }
+        
+        function restartObstacleSpawnInterval() {
+            if (obstacleIntervalId) clearInterval(obstacleIntervalId);
+            const delay = getObstacleSpawnDelay();
+            obstacleIntervalId = setInterval(() => {
+                if (!isPaused && hp > 0) {
+                    const spawnCount = getObstacleSpawnCount();
+                    for (let i = 0; i < spawnCount; i++) {
+                        spawnObstacle();
+                    }
+                }
+            }, delay);
+        }
+        
+        function startObstacleSpawner() {
+            restartObstacleSpawnInterval();
+        }
+        
+        restartBtn.addEventListener('click', () => {
+            resetGame();
+        });
+
+        function createEnemyShip() {
+            const group = new THREE.Group();
+            const matRed = new THREE.MeshStandardMaterial({ color: 0xdd3333, metalness: 0.95, roughness: 0.1, emissive: 0x550000 });
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(20, 28, 45, 12), matRed);
+            body.rotation.x = Math.PI / 2;
+            body.castShadow = true;
+            group.add(body);
+            
+            const wingGeo = new THREE.BoxGeometry(75, 6, 20);
+            const wingMat = new THREE.MeshStandardMaterial({ color: 0x7a2222, metalness: 0.8 });
+            const wing = new THREE.Mesh(wingGeo, wingMat);
+            wing.position.set(0, 5, -5);
+            group.add(wing);
+
+            const cannon = new THREE.Mesh(new THREE.CylinderGeometry(4, 5, 18, 8), new THREE.MeshStandardMaterial({ color: 0xdd8866, emissive: 0xff2200 }));
+            cannon.position.set(0, 9, 32);
+            group.add(cannon);
+
+            return group;
+        }
+
+        function spawnEnemy() {
+            const enemyMesh = createEnemyShip();
+            enemyMesh.scale.set(1.4, 1.4, 1.4);
+            enemyMesh.position.set(
+                (Math.random() - 0.5) * 4500,
+                (Math.random() - 0.5) * 2800,
+                -8000 - Math.random() * 2000
+            );
+            scene.add(enemyMesh);
+            enemies.push({ 
+                mesh: enemyMesh, 
+                lastShot: Date.now() - Math.random() * 1500,
+                speed: 12 + Math.random() * 10
+            });
+        }
+
+        // Texturizado de Asteroides
+        const texLoader = new THREE.TextureLoader();
+        let rockTex = null;
+        
+        texLoader.load('./assets/textures/meteorito.jpg', 
+            (tex) => { rockTex = tex; rockMat.map = tex; rockMat.needsUpdate = true; },
+            undefined,
+            () => { texLoader.load('./assets/textures/metorito.jpg', (tex) => { rockTex = tex; rockMat.map = tex; rockMat.needsUpdate = true; }); }
+        );
+        
+        const rockGeometries = [
+            new THREE.DodecahedronGeometry(45, 0),
+            new THREE.IcosahedronGeometry(42, 0),
+            new THREE.OctahedronGeometry(48),
+            new THREE.TetrahedronGeometry(50),
+            new THREE.SphereGeometry(40, 5, 5)
+        ];
+        
+        const rockMat = new THREE.MeshStandardMaterial({ roughness: 0.8, metalness: 0.15 });
+
+        function spawnObstacle() {
+            const geoIndex = Math.floor(Math.random() * rockGeometries.length);
+            const rock = new THREE.Mesh(rockGeometries[geoIndex], rockMat);
+            
+            const scaleX = 1.2 + Math.random() * 1.2;
+            const scaleY = 0.8 + Math.random() * 1.0;
+            const scaleZ = 0.8 + Math.random() * 1.2;
+            rock.scale.set(scaleX, scaleY, scaleZ);
+            
+            rock.castShadow = true;
+            rock.position.set(
+                (Math.random() - 0.5) * 7000,  
+                (Math.random() - 0.5) * 5000,  
+                -12000 - Math.random() * 4000   
+            );
+            
+            rock.rotation.x = Math.random() * Math.PI * 2;
+            rock.rotation.y = Math.random() * Math.PI * 2;
+            rock.rotation.z = Math.random() * Math.PI * 2;
+            
+            scene.add(rock);
+            obstacles.push(rock);
+        }
+
+        // --------------------------------------------------------------
+        // 6. SISTEMA DE DISPAROS Y EFECTOS DE PARTÍCULAS (EXPLOSIONES)
+        // --------------------------------------------------------------
+        const playerBullets = [];
+        const enemyBullets = [];
+
+        function createExplosion(pos) {
+            if (explosionSound.paused || explosionSound.ended) {
+                explosionSound.cloneNode(true).play().catch(e => {});
+            }
+
+            const particleCount = 42;
+            const geometry = new THREE.BufferGeometry();
+            const positions = [];
+            const velocities = [];
+
+            for (let i = 0; i < particleCount; i++) {
+                positions.push(pos.x, pos.y, pos.z);
+                velocities.push(
+                    (Math.random() - 0.5) * 135,
+                    (Math.random() - 0.5) * 135,
+                    (Math.random() - 0.5) * 135
+                );
+            }
+
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            const material = new THREE.PointsMaterial({ color: 0xffaa00, size: 38, transparent: true, opacity: 1 });
+            const system = new THREE.Points(geometry, material);
+            scene.add(system);
+            
+            const flashLight = new THREE.PointLight(0xff6600, 22, 1800);
+            flashLight.position.copy(pos);
+            scene.add(flashLight);
+
+            const startTime = Date.now();
+            function animateExplosion() {
+                const elapsed = (Date.now() - startTime) / 1000;
+                if (elapsed > 0.6) {
+                    scene.remove(system);
+                    scene.remove(flashLight);
+                } else {
+                    const posAttr = system.geometry.attributes.position;
+                    for (let i = 0; i < particleCount; i++) {
+                        posAttr.array[i * 3] += velocities[i * 3] * 0.016;
+                        posAttr.array[i * 3 + 1] += velocities[i * 3 + 1] * 0.016;
+                        posAttr.array[i * 3 + 2] += velocities[i * 3 + 2] * 0.016;
+                    }
+                    posAttr.needsUpdate = true;
+                    material.opacity = 1 - (elapsed / 0.6);
+                    requestAnimationFrame(animateExplosion);
+                }
+            }
+            animateExplosion();
+        }
+
+        function shoot(sourceGroup, isPlayer) {
+            if (isPlayer) {
+                laserSound.cloneNode(true).play().catch(e => {});
+            } else {
+                enemyLaserSound.cloneNode(true).play().catch(e => {});
+            }
+
+            const laserGroup = new THREE.Group();
+            const laserGeo = new THREE.CylinderGeometry(5.5, 5.5, 130, 16);
+            const laserMat = new THREE.MeshStandardMaterial({
+                color: isPlayer ? 0x00ffff : 0xff2200,
+                emissive: isPlayer ? 0x00aaff : 0xcc2200,
+                metalness: 0.6,
+                roughness: 0.1
+            });
+            const laserMesh = new THREE.Mesh(laserGeo, laserMat);
+            laserMesh.rotation.x = Math.PI / 2;
+            laserGroup.add(laserMesh);
+
+            laserGroup.position.copy(sourceGroup.position).add(new THREE.Vector3(0, 5, 80));
+            if (!isPlayer) {
+                laserGroup.position.copy(sourceGroup.position).add(new THREE.Vector3(0, 10, -45));
+            }
+
+            scene.add(laserGroup);
+            if (isPlayer) {
+                playerBullets.push(laserGroup);
+            } else {
+                enemyBullets.push(laserGroup);
+            }
+        }
+
+        // --------------------------------------------------------------
+        // 7. INPUTS DE TECLADO Y CONTROLES DEL MOTOR DE JUEGO
+        // --------------------------------------------------------------
+        const keysPressed = {};
+        window.addEventListener('keydown', (e) => {
+            keysPressed[e.code] = true;
+            if (e.code === 'Space' && !isPaused && hp > 0) {
+                e.preventDefault();
+                shoot(player, true);
+            }
+        });
+        window.addEventListener('keyup', (e) => keysPressed[e.code] = false);
+
+        function handleCollision() {
+            hp -= 1;
+            createExplosion(player.position);
+            hpElem.innerText = hp;
+            if (hp <= 0) {
+                gameOverAlert.style.display = 'block';
+                isPaused = true;
+                bgMusic.pause();
+                if (enemySpawnIntervalId) clearInterval(enemySpawnIntervalId);
+                if (obstacleIntervalId) clearInterval(obstacleIntervalId);
+            }
+        }
+
+        function resetGame() {
+            hp = 3;
+            score = 0;
+            difficultyLevel = 1;
+            enemySpawnMultiplier = 1;
+            hpElem.innerText = hp;
+            scoreElem.innerText = score;
+            gameOverAlert.style.display = 'none';
+            isPaused = false;
+            bgMusic.play().catch(e => {});
+            document.getElementById('warning').innerHTML = "💎 ¡MONTÓN DE OBSTÁCULOS! ESQUIVALOS 💎";
+
+            enemies.forEach(en => scene.remove(en.mesh));
+            enemies = [];
+            obstacles.forEach(ob => scene.remove(ob));
+            obstacles = [];
+            playerBullets.forEach(b => scene.remove(b));
+            playerBullets.length = 0;
+            enemyBullets.forEach(b => scene.remove(b));
+            enemyBullets.length = 0;
+            
+            player.position.set(0, 0, 200);
+            restartEnemySpawnInterval();
+            restartObstacleSpawnInterval();
+        }
+
+        let speedZ = 0;
+
+        // --------------------------------------------------------------
+        // 8. CICLO DE ACTUALIZACIÓN DE FOTOGRAMAS (GAME LOOP)
+        // --------------------------------------------------------------
+        function updateGame() {
+            if (isPaused || hp <= 0) return;
+
+            let targetSpeedZ = keysPressed['KeyW'] ? 180 : (keysPressed['KeyS'] ? -50 : 0);
+            speedZ = THREE.MathUtils.lerp(speedZ, targetSpeedZ, 0.05);
+
+            if (keysPressed['ArrowLeft']) player.position.x -= 18;
+            if (keysPressed['ArrowRight']) player.position.x += 18;
+            if (keysPressed['ArrowUp']) player.position.y += 12;
+            if (keysPressed['ArrowDown']) player.position.y -= 12;
+
+            player.position.x = Math.min(Math.max(player.position.x, -2500), 2500);
+            player.position.y = Math.min(Math.max(player.position.y, -1100), 2000);
+
+            player.position.z -= (speedZ * 0.3);
+
+            camera.position.lerp(new THREE.Vector3(player.position.x, player.position.y + 25, player.position.z + 185), 0.1);
+            camera.lookAt(player.position.x, player.position.y, player.position.z - 1000);
+
+            shipLight.position.copy(player.position);
+            shipLight.target.position.set(player.position.x, player.position.y, player.position.z - 1000);
+            
+            // Render de Obstáculos
+            for(let i = 0; i < obstacles.length; i++) {
+                const obs = obstacles[i];
+                obs.position.z += 28 + (speedZ * 0.4);
+                obs.rotation.x += 0.015;
+                obs.rotation.y += 0.01;
+                obs.rotation.z += 0.008;
+                
+                if (obs.position.distanceTo(player.position) < 130) {
+                    handleCollision();
+                    scene.remove(obs);
+                    obstacles.splice(i, 1);
+                    i--;
+                    continue;
+                }
+                
+                if(obs.position.z > 800) { 
+                    scene.remove(obs); 
+                    obstacles.splice(i, 1); 
+                    i--;
+                }
+            }
+
+            // Render de Enemigos
+            for(let i = 0; i < enemies.length; i++) {
+                const e = enemies[i];
+                e.mesh.position.z += e.speed + (speedZ * 0.25);
+                e.mesh.position.x += (player.position.x - e.mesh.position.x) * 0.003;
+                e.mesh.position.y += (player.position.y - e.mesh.position.y) * 0.003;
+                e.mesh.lookAt(player.position);
+                
+                if (Date.now() - e.lastShot > 2000 && e.mesh.position.z < -500 && hp > 0) { 
+                    shoot(e.mesh, false); 
+                    e.lastShot = Date.now(); 
+                }
+                if (e.mesh.position.z > 500) { 
+                    scene.remove(e.mesh); 
+                    enemies.splice(i, 1); 
+                    i--;
+                }
+            }
+
+            // Monitoreo de Balas Aliadas
+            for(let i = 0; i < playerBullets.length; i++) {
+                const b = playerBullets[i];
+                b.position.z -= 120;
+                
+                let hit = false;
+                for(let j = 0; j < enemies.length; j++) {
+                    if (b.position.distanceTo(enemies[j].mesh.position) < 135) {
+                        createExplosion(enemies[j].mesh.position);
+                        scene.remove(enemies[j].mesh);
+                        enemies.splice(j, 1);
+                        hit = true;
+                        score++; 
+                        scoreElem.innerText = score;
+                        updateDifficultyByScore();
+                        break;
+                    }
+                }
+                if (hit) {
+                    scene.remove(b);
+                    playerBullets.splice(i, 1);
+                    i--;
+                } else if (b.position.z > 1000 || b.position.z < -2000) {
+                    scene.remove(b);
+                    playerBullets.splice(i, 1);
+                    i--;
+                }
+            }
+
+            // Monitoreo de Balas Enemigas
+            for(let i = 0; i < enemyBullets.length; i++) {
+                const eb = enemyBullets[i];
+                eb.position.z += 40;
+                
+                if (eb.position.distanceTo(player.position) < 70) {
+                    handleCollision();
+                    scene.remove(eb);
+                    enemyBullets.splice(i, 1);
+                    i--;
+                } else if (eb.position.z > 1500 || eb.position.z < -3000) {
+                    scene.remove(eb);
+                    enemyBullets.splice(i, 1);
+                    i--;
+                }
+            }
+            
+            stars.rotation.y += 0.0003;
+            stars.rotation.x += 0.0001;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            updateGame();
+            renderer.render(scene, camera);
+        }
+        
+        restartEnemySpawnInterval();
+        animate();
+
+        // Escalabilidad del Canvas Responsivo
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+    
+</body>
+</html>
