@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Space Hunter VR - EN PRIMERA PERSONA | Valeria Abigail Villeda Hernández</title>
+    <title>Space Hunter VR - Meta Quest 3 | Valeria Abigail Villeda Hernández</title>
     <style>
         * {
             margin: 0;
@@ -34,11 +34,11 @@
         .start-card {
             background: rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(20px);
-            padding: 50px;
+            padding: 45px;
             border-radius: 40px;
             border: 3px solid #00ccff;
             text-align: center;
-            max-width: 600px;
+            max-width: 650px;
             width: 90%;
             box-shadow: 0 0 60px rgba(0, 204, 255, 0.3);
             animation: glowPulse 2s infinite;
@@ -66,7 +66,7 @@
             letter-spacing: 8px;
             color: #00ccff;
             text-shadow: 0 0 20px #00ccff;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
         
         .controls-vr {
@@ -74,18 +74,20 @@
             background: rgba(0, 0, 0, 0.6);
             padding: 20px;
             border-radius: 20px;
-            margin: 25px 0;
+            margin: 20px 0;
             border-left: 4px solid #00ccff;
         }
         
         .controls-vr h3 {
             color: #ffcc00;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            font-size: 16px;
         }
         
         .controls-vr p {
-            margin: 10px 0;
+            margin: 8px 0;
             color: #ccccff;
+            font-size: 13px;
         }
         
         .controls-vr .vr-icon {
@@ -95,6 +97,7 @@
             border-radius: 20px;
             margin-right: 10px;
             color: #00ccff;
+            font-weight: bold;
         }
         
         .start-btn {
@@ -106,7 +109,7 @@
             font-weight: bold;
             border-radius: 50px;
             cursor: pointer;
-            margin-top: 20px;
+            margin-top: 10px;
             transition: transform 0.3s;
             font-family: 'Orbitron', monospace;
         }
@@ -117,9 +120,14 @@
         }
         
         .credits {
-            margin-top: 25px;
-            color: #6688aa;
-            font-size: 0.7rem;
+            margin-top: 20px;
+            color: #aaccff;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            background: rgba(0, 20, 50, 0.4);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 204, 255, 0.1);
         }
         
         #game-ui {
@@ -281,21 +289,6 @@
             border: 1px solid #00ccff;
         }
         
-        .vibration-indicator {
-            position: absolute;
-            bottom: 260px;
-            right: 20px;
-            background: rgba(255,0,0,0.8);
-            padding: 5px 10px;
-            border-radius: 10px;
-            font-size: 10px;
-            color: white;
-            font-family: monospace;
-            pointer-events: none;
-            z-index: 150;
-            display: none;
-        }
-        
         @media (max-width: 768px) {
             .game-title { font-size: 1.5rem; }
             .start-card { padding: 25px; }
@@ -317,20 +310,25 @@
 
     <div id="start-screen">
         <div class="start-card">
-            <div class="vr-badge">🥽 META QUEST 3 READY - VISTA DE CABINA 🥽</div>
+            <div class="vr-badge">🥽 META QUEST 3 READY - VISTA DESDE LA CABINA 🥽</div>
             <h1 class="game-title">SPACE HUNTER</h1>
-            <p class="game-subtitle" style="color:#88aaff;">¡Siente cada impacto en 1ª Persona!</p>
+            <p class="game-subtitle" style="color:#88aaff;">¡Misión en Primera Persona con Cabina Fija!</p>
             
             <div class="controls-vr">
-                <h3>🎮 CONTROLES VR (META QUEST)</h3>
-                <p><span class="vr-icon">🕹️ JOYSTICK IZQ</span> → Mover nave libremente</p>
-                <p><span class="vr-icon">🔫 GATILLO</span> → Disparo láser frontal</p>
-                <p><span class="vr-icon">🕹️ JOYSTICK DER</span> → Regular velocidad (W/S)</p>
-                <p><span class="vr-icon">💥 VIBRACIÓN</span> → Feedback háptico en colisiones</p>
+                <h3>  REGLAS DE OPERACIÓN Y CONTROLES:</h3>
+                <p><span class="vr-icon">🕹️ JOYSTICK IZQ</span> → Direccionar nave en el espacio (Cabina Fija)</p>
+                <p><span class="vr-icon">🔫 GATILLO</span> → Disparo láser balístico frontal</p>
+                <p><span class="vr-icon">🕹️ JOYSTICK DER</span> → Arriba/Abajo = Propulsión / Frenado (W/S)</p>
+                <p><span class="vr-icon">🥽 VISTA NATIVA</span> → Cámara interior: Solo ves la trompa del caza al frente</p>
             </div>
             
             <button class="start-btn" id="start-btn">🚀 INICIAR MISIÓN VR 🚀</button>
-            <p class="credits">Valeria Abigail Villeda Hernández | Integrantes: Miguel Angel Cano, Reyna Olivia Rodríguez, Ashley Arumy Contreras, César Reyes | Graficación - TecNM</p>
+            <div class="credits">
+                <strong>EQUIPO DE DESARROLLO:</strong><br>
+                Valeria Abigail Villeda Hernández | Miguel Angel Cano Alejandro<br>
+                Reyna Olivia Rodríguez Morales | Ashley Arumy Contreras Torres | César Reyes Calva<br>
+                <span style="color: #00ccff; font-size: 11px;">Instituto Tecnológico de Pachuca | Graficación</span>
+            </div>
         </div>
     </div>
 
@@ -338,7 +336,7 @@
         <div id="warning">💎 ¡MONTÓN DE OBSTÁCULOS! ESQUIVALOS 💎</div>
 
         <div id="ui-bottom">
-            <div>🥽 MODO INMERSIVO | Pilotando desde el interior de la cabina</div>
+            <div>🚀 PILOTANDO EN 1ª PERSONA | Vista de Cabina Fija Activa</div>
             <div class="stat-container">
                 <div>🎯 SCORE:<span id="score-val" class="stat-val">0</span></div>
                 <div>🛡️ HP:<span id="hp-val" class="stat-val">3</span></div>
@@ -347,15 +345,14 @@
         </div>
         
         <div id="vr-panel">
-            <h4>🥽 INSTRUCCIONES CABINA VR</h4>
+            <h4>🥽 VISTA DE CABINA</h4>
             <p>🔹 Joystick IZQ = DESPLAZARSE</p>
-            <p>🔹 GATILLOS = FUEGO LÁSER</p>
-            <p>🔹 Joystick DER = PROPULSORES</p>
+            <p>🔹 GATILLO = FUEGO LÁSER</p>
+            <p>🔹 Joystick DER = VELOCIDAD</p>
         </div>
         
         <div id="vr-status">⏳ Conectando controles VR...</div>
         <div id="debug-joystick">🕹️ Esperando joystick...</div>
-        <div id="vibration-indicator" class="vibration-indicator">💥 ¡VIBRACIÓN! 💥</div>
     </div>
 
     <div id="game-over-alert">
@@ -379,15 +376,15 @@
         const scoreElem = document.getElementById('score-val');
         const hpElem = document.getElementById('hp-val');
         const debugJoystick = document.getElementById('debug-joystick');
-        const vibrationIndicator = document.getElementById('vibration-indicator');
         
         // --------------------------------------------------------------
-        // 1. ESCENA Y RENDERIZADOR
+        // 1. ESCENA Y CONFIGURACIÓN BASE
         // --------------------------------------------------------------
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x010108);
-        scene.fog = new THREE.FogExp2(0x010108, 0.00005);
+        scene.background = new THREE.Color(0x01010a);
+        scene.fog = new THREE.FogExp2(0x01010a, 0.00005);
 
+        // Cámara integrada en Primera Persona
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 25000);
         
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -412,50 +409,21 @@
         document.body.appendChild(vrButton);
         
         // --------------------------------------------------------------
-        // 2. MANDOS Y RETROALIMENTACIÓN HÁPTICA
+        // 2. CONTROLES DE JOYSTICKS VR
         // --------------------------------------------------------------
         let leftStickX = 0, leftStickY = 0;
         let rightStickX = 0, rightStickY = 0;
         let leftTrigger = false, rightTrigger = false;
-        let leftControllerGamepad = null;
-        let rightControllerGamepad = null;
         
         const controllerLeft = renderer.xr.getController(0);
         const controllerRight = renderer.xr.getController(1);
         scene.add(controllerLeft);
         scene.add(controllerRight);
         
-        function vibrateControllers(intensity = 0.8, duration = 300) {
-            if (vibrationIndicator) {
-                vibrationIndicator.style.display = 'block';
-                setTimeout(() => { if (vibrationIndicator) vibrationIndicator.style.display = 'none'; }, duration);
-            }
-            
-            if (leftControllerGamepad?.hapticActuators?.[0]) {
-                try {
-                    leftControllerGamepad.hapticActuators[0].playEffect('dual-rumble', {
-                        startDelay: 0, duration: duration, strongMagnitude: intensity, weakMagnitude: intensity * 0.6
-                    }).catch(() => {});
-                } catch(e) {}
-            }
-            if (rightControllerGamepad?.hapticActuators?.[0]) {
-                try {
-                    rightControllerGamepad.hapticActuators[0].playEffect('dual-rumble', {
-                        startDelay: 0, duration: duration, strongMagnitude: intensity, weakMagnitude: intensity * 0.6
-                    }).catch(() => {});
-                } catch(e) {}
-            }
-        }
-        
         controllerLeft.addEventListener('connected', (event) => {
-            if (event.data?.gamepad) leftControllerGamepad = event.data.gamepad;
-            document.getElementById('vr-status').innerHTML = '✅ Controlador IZQUIERDO detectado';
-            document.getElementById('vr-status').style.color = '#0f0';
-        });
-        
-        controllerRight.addEventListener('connected', (event) => {
-            if (event.data?.gamepad) rightControllerGamepad = event.data.gamepad;
+            console.log('Controlador IZQUIERDO conectado', event.data);
             document.getElementById('vr-status').innerHTML = '✅ Sistemas de Cabina VR Calibrados';
+            document.getElementById('vr-status').style.color = '#0f0';
         });
         
         controllerLeft.addEventListener('selectstart', () => { if (!isPaused && hp > 0 && gameActive) fireVRBullet(); });
@@ -463,25 +431,23 @@
         
         function updateVRInputs() {
             const session = renderer.xr.getSession();
-            if (session?.inputSources) {
+            if (session && session.inputSources) {
                 for (const source of session.inputSources) {
                     if (source.gamepad) {
                         const gp = source.gamepad;
-                        if (source.handedness === 'left') {
-                            leftControllerGamepad = gp;
-                            if (gp.axes.length >= 4) {
-                                leftStickX = gp.axes[2] || 0;
-                                leftStickY = gp.axes[3] || 0;
+                        if (gp.axes.length >= 4) {
+                            if (source.handedness === 'left') {
+                                leftStickX = gp.axes[0] || gp.axes[2] || 0;
+                                leftStickY = gp.axes[1] || gp.axes[3] || 0;
                             }
-                            leftTrigger = gp.buttons[0]?.pressed || false;
+                            if (source.handedness === 'right') {
+                                rightStickX = gp.axes[0] || gp.axes[2] || 0;
+                                rightStickY = gp.axes[1] || gp.axes[3] || 0;
+                            }
                         }
-                        if (source.handedness === 'right') {
-                            rightControllerGamepad = gp;
-                            if (gp.axes.length >= 4) {
-                                rightStickX = gp.axes[2] || 0;
-                                rightStickY = gp.axes[3] || 0;
-                            }
-                            rightTrigger = gp.buttons[0]?.pressed || false;
+                        if (gp.buttons) {
+                            if (source.handedness === 'left') leftTrigger = gp.buttons[0]?.pressed || false;
+                            if (source.handedness === 'right') rightTrigger = gp.buttons[0]?.pressed || false;
                         }
                     }
                 }
@@ -493,13 +459,13 @@
                     &nbsp;&nbsp;X: ${leftStickX.toFixed(2)} | Y: ${leftStickY.toFixed(2)}<br>
                     🕹️ CABINA JOYSTICK DER (Motores):<br>
                     &nbsp;&nbsp;Y: ${rightStickY.toFixed(2)}<br>
-                    ${renderer.xr.isPresenting ? '🔵 VISOR META QUEST 3 CONECTADO' : '⚪ MODO PC'}
+                    ${renderer.xr.isPresenting ? '🔵 VISTA DE CABINA ACTIVA' : ' White MODO PC'}
                 `;
             }
         }
         
         // --------------------------------------------------------------
-        // 3. RECURSOS DE AUDIO
+        // 3. AUDIO NATIVO
         // --------------------------------------------------------------
         const bgMusic = new Audio('./assets/audio/space_ambient.mp3');
         bgMusic.loop = true;
@@ -516,11 +482,11 @@
         
         function playSound(sound) {
             const clone = sound.cloneNode();
-            clone.play().catch(() => {});
+            clone.play().catch(e => console.log("Audio en cola"));
         }
         
         // --------------------------------------------------------------
-        // 4. AMBIENTACIÓN LUMÍNICA Y SISTEMA COSMOLÓGICO
+        // 4. LUCES Y ENTORNO
         // --------------------------------------------------------------
         const ambientLight = new THREE.AmbientLight(0x505070, 0.8);
         scene.add(ambientLight);
@@ -532,7 +498,7 @@
         const shipLight = new THREE.PointLight(0x00ffff, 1.2, 800);
         scene.add(shipLight);
         
-        // Campo Estelar Estático
+        // Campo Estelar
         const starGeometry = new THREE.BufferGeometry();
         const starCount = 6000;
         const starPositions = new Float32Array(starCount * 3);
@@ -545,21 +511,21 @@
         const stars = new THREE.Points(starGeometry, new THREE.PointsMaterial({ color: 0xffffff, size: 1.3 }));
         scene.add(stars);
         
-        // Malla Grid Inferior de Soporte
+        // Malla Grid Inferior
         const gridHelper = new THREE.GridHelper(12000, 60, 0x00aaff, 0x335588);
         gridHelper.position.y = -500;
         gridHelper.material.transparent = true;
         gridHelper.material.opacity = 0.2;
         scene.add(gridHelper);
         
-        // Bóveda Nebulosa Externa
+        // Bóveda
         const dome = new THREE.Mesh(
             new THREE.SphereGeometry(6000, 32, 32),
             new THREE.MeshStandardMaterial({ color: 0x0a0a2a, emissive: 0x110022, transparent: true, opacity: 0.3, side: THREE.BackSide })
         );
         scene.add(dome);
         
-        // Mallas de confinamiento espacial (Límites de Vuelo)
+        // Límites perimetrales invisibles
         const boundaryMat = new THREE.MeshPhongMaterial({ color: 0x00ccff, transparent: true, opacity: 0.02 });
         const boundaries = [
             new THREE.Mesh(new THREE.BoxGeometry(11000, 4000, 50), boundaryMat),
@@ -574,27 +540,26 @@
         boundaries.forEach(b => scene.add(b));
         
         // --------------------------------------------------------------
-        // 5. ENRUTAMIENTO DE JUGADOR Y ANCLAJE DE CÁMARA EN CABINA
+        // 5. ENTIDAD JUGADOR CON ESTRUCTURA DE CABINA NATIVA
         // --------------------------------------------------------------
         let player = new THREE.Group();
         scene.add(player);
         
-        // Grupo contenedor del morro/trompa
+        // Grupo contenedor del fuselaje
         let cockpitGroup = new THREE.Group();
         player.add(cockpitGroup);
         
         function createOriginalShip() {
             const shipGroup = new THREE.Group();
             
-            // Replicamos solo el cono delantero largo para que salga proyectado hacia el frente de la pantalla
+            // Cuerpo de la nave extendido hacia el frente (Trompa visible)
             const bodyMat = new THREE.MeshStandardMaterial({ color: 0x3399ff, metalness: 0.85, roughness: 0.2, emissive: 0x004466 });
             const body = new THREE.Mesh(new THREE.ConeGeometry(8, 55, 32), bodyMat);
             body.rotation.x = Math.PI / 2;
-            body.position.set(0, -6, -25); // Desplazado al frente para simular la trompa del caza
+            body.position.set(0, -6, -25); // Forzamos a que salga por enfrente de los ojos de la cámara
             body.castShadow = true;
             shipGroup.add(body);
             
-            // Alas de soporte periférico bajo la línea de los ojos
             const wingMat = new THREE.MeshStandardMaterial({ color: 0x2277cc, metalness: 0.9 });
             const leftWing = new THREE.Mesh(new THREE.BoxGeometry(35, 2, 15), wingMat);
             leftWing.position.set(-25, -8, -15);
@@ -613,14 +578,14 @@
             fbx.traverse(c => { if(c.isMesh) c.castShadow = true; });
             fbx.scale.set(0.0007, 0.0007, 0.0007);
             
-            // REGLA DE NEGOCIO PRIMERA PERSONA: Empujamos el FBX hacia adelante en Z y abajo en Y. 
-            // Esto mete la cámara exactamente donde irían los ojos del piloto, dejando ver solo el morro exterior.
+            // DESPLAZAMIENTO REQUERIDO: Colocamos el modelo FBX adelantado y abajo en Y
+            // para que la cámara quede situada dentro de la cabina y solo sea visible el morro frontal.
             fbx.position.set(0, -12, -25);
             fbx.rotation.set(Math.PI / 2, Math.PI, 0);
             
             cockpitGroup.add(fbx);
             modelLoaded = true;
-            console.log("Fuselaje FBX configurado como morro frontal en Primera Persona");
+            console.log("Fuselaje FBX configurado como morro frontal");
         }, undefined, () => {
             if (!modelLoaded) {
                 while(cockpitGroup.children.length) cockpitGroup.remove(cockpitGroup.children[0]);
@@ -628,15 +593,15 @@
             }
         });
         
-        // Forzar inicialización limpia
+        // Coordenada inicial de vuelo
         player.position.set(0, 0, 200);
         
-        // ANCLAJE ESTRUCTURAL: La cámara se vuelve hija directa del jugador en la coordenada central de cabina (0,0,0)
+        // FIJACIÓN DE PRIMERA PERSONA NATIVA: La cámara se vuelve hija directa del jugador en (0,0,0)
         player.add(camera);
-        camera.position.set(0, 0, 0);
+        camera.position.set(0, 0, 0); // Ojos del piloto estables
 
         // --------------------------------------------------------------
-        // 6. ACTUALIZACIÓN DE EXPLOSIONES TRIDIMENSIONALES
+        // 6. EXPLOSIONES
         // --------------------------------------------------------------
         let activeExplosions = [];
         function createExplosion(position) {
@@ -658,7 +623,6 @@
                 scene.add(particle);
                 particles.push(particle);
             }
-            
             activeExplosions.push({ particles: particles, flashLight: flashLight, startTime: Date.now() });
         }
         
@@ -682,13 +646,12 @@
         }
         
         // --------------------------------------------------------------
-        // 7. SISTEMA DE SPAWNERS Y CONFIGURACIÓN DE ENEMIGOS
+        // 7. SPAWNERS (ENEMIGOS Y ASTEROIDES MASIVOS)
         // --------------------------------------------------------------
         let enemies = [];
         let obstacles = [];
         let score = 0;
         let hp = 3;
-        let difficulty = 1;
         let isPaused = false;
         let gameActive = false;
         let enemyInterval, obstacleInterval;
@@ -739,7 +702,7 @@
         }
         
         // --------------------------------------------------------------
-        // 8. CONTROLADORES DE RENDERIZADO DE PROYECTILES
+        // 8. CONTROLADORES DE DISPARO BALÍSTICO
         // --------------------------------------------------------------
         const playerBullets = [];
         const enemyBullets = [];
@@ -756,7 +719,7 @@
             laser.position.copy(source.position);
             
             if (isPlayer) {
-                laser.position.z -= 50; // Lanzadas hacia el frente de la cabina
+                laser.position.z -= 50; // Salen eyectadas desde el frente del morro
                 playerBullets.push(laser);
             } else {
                 laser.position.z += 50;
@@ -773,7 +736,7 @@
             );
             laser.rotation.x = Math.PI / 2;
             
-            // Enfoque libre: Se calcula el vector frontal de la cabina del casco VR
+            // Cálculo vectorial en base a hacia dónde mire la cabeza/casco VR del piloto
             const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
             laser.position.copy(player.position).add(new THREE.Vector3(0, -2, -10));
             laser.quaternion.copy(camera.quaternion);
@@ -784,13 +747,10 @@
         }
         
         // --------------------------------------------------------------
-        // 9. FLUJO DE COLISIONES E INTERRUPTORES DE EVENTO
+        // 9. EVENTOS DE CONTROLADORES
         // --------------------------------------------------------------
         function handleCollision() {
             if (!gameActive) return;
-            
-            // CONTROL HÁPTICO: Siente los impactos reales en los dos mandos VR
-            vibrateControllers(1.0, 400);
             
             hp--;
             hpElem.innerText = hp;
@@ -801,7 +761,6 @@
                 gameOverAlert.style.display = 'block';
                 isPaused = true;
                 bgMusic.pause();
-                vibrateControllers(1.0, 700); // Vibración final extendida
             }
         }
         
@@ -829,7 +788,7 @@
         window.addEventListener('keyup', (e) => keys[e.code] = false);
         
         // --------------------------------------------------------------
-        // 10. GAME LOOP CENTRALIZADO WEBXR (setAnimationLoop)
+        // 10. GAME LOOP WEBXR CENTRALIZADO (setAnimationLoop)
         // --------------------------------------------------------------
         function updateGame() {
             if (!gameActive || isPaused || hp <= 0) return;
@@ -838,7 +797,7 @@
             let moveX = 0, moveY = 0;
             
             if (renderer.xr.isPresenting) {
-                // Navegación analógica con los Sticks de Meta Quest 3
+                // Navegación analógica mediante joysticks de Quest 3
                 if (Math.abs(leftStickX) > 0.15) moveX = leftStickX * 32;
                 if (Math.abs(leftStickY) > 0.15) moveY = -leftStickY * 24;
                 
@@ -849,7 +808,7 @@
                     speedZ = THREE.MathUtils.lerp(speedZ, 0, 0.08);
                 }
             } else {
-                // Teclado PC de respaldo
+                // Modo PC clásico
                 let targetSpeedZ = keys['KeyW'] ? 180 : (keys['KeyS'] ? -40 : 0);
                 speedZ = THREE.MathUtils.lerp(speedZ, targetSpeedZ, 0.1);
                 if (keys['ArrowLeft']) moveX = -26;
@@ -861,7 +820,7 @@
             player.position.x += moveX;
             player.position.y += moveY;
             
-            // Confinamiento estricto perimetral
+            // Muro de confinamiento estricto
             player.position.x = Math.min(Math.max(player.position.x, -3700), 3700);
             player.position.y = Math.min(Math.max(player.position.y, -1250), 2050);
             player.position.z -= (speedZ * 0.32 + 8);
@@ -869,11 +828,10 @@
             shipLight.position.copy(player.position);
             updateExplosions();
             
-            // Loop de Obstáculos
+            // Obstáculos
             for (let i = 0; i < obstacles.length; i++) {
                 const obs = obstacles[i];
                 obs.position.z += 35 + speedZ * 0.35;
-                obs.rotation.x += 0.01;
                 
                 if (obs.position.distanceTo(player.position) < 115) {
                     handleCollision();
@@ -884,7 +842,7 @@
                 }
             }
             
-            // Loop de Enemigos
+            // Enemigos
             for (let i = 0; i < enemies.length; i++) {
                 const e = enemies[i];
                 e.mesh.position.z += e.speed + speedZ * 0.25;
@@ -904,7 +862,7 @@
                 }
             }
             
-            // Loop de Balas Jugador
+            // Balas del Piloto
             for (let i = 0; i < playerBullets.length; i++) {
                 const b = playerBullets[i];
                 if (b.userData?.isVR) b.position.addScaledVector(b.userData.direction, b.userData.speed || 180);
@@ -924,7 +882,7 @@
                 }
             }
             
-            // Loop de Balas Enemigas
+            // Proyectiles enemigos
             for (let i = 0; i < enemyBullets.length; i++) {
                 const eb = enemyBullets[i];
                 eb.position.z += 55;
