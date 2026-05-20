@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Space Hunter VR - POO Red Squadron | Valeria Abigail Villeda Hernández</title>
+    <title>Space Hunter VR - Red Squadron POO | Valeria Abigail Villeda Hernández</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', 'Courier New', monospace; }
@@ -24,9 +24,24 @@
             50% { box-shadow: 0 0 60px rgba(0,204,255,0.6); border-color: #00ffff; }
             100% { box-shadow: 0 0 20px rgba(0,204,255,0.3); border-color: #00ccff; }
         }
+        .vr-badge {
+            background: linear-gradient(135deg, #ff6600, #ff3300); color: white;
+            padding: 8px 20px; border-radius: 30px; font-size: 14px; font-weight: bold;
+            margin-bottom: 15px; display: inline-block;
+        }
         .game-title {
             font-size: 2.2rem; letter-spacing: 4px; color: #ffe81f;
             text-shadow: 0 0 15px #f00, 0 0 5px #ffaa00; margin-bottom: 8px;
+        }
+        .controls-vr {
+            text-align: left; background: rgba(0,0,0,0.6); padding: 18px;
+            border-radius: 20px; margin: 20px 0; border-left: 4px solid #00ccff;
+        }
+        .controls-vr h3 { color: #ffcc00; margin-bottom: 12px; }
+        .controls-vr p { margin: 8px 0; color: #ccccff; font-size: 12px; }
+        .vr-icon {
+            display: inline-block; background: rgba(0,204,255,0.2);
+            padding: 4px 10px; border-radius: 20px; margin-right: 8px; color: #00ccff;
         }
         .start-btn {
             background: linear-gradient(135deg, #00ccff, #0066aa); border: none; color: white;
@@ -34,6 +49,7 @@
             cursor: pointer; margin-top: 15px; transition: transform 0.3s; font-family: 'Orbitron', monospace;
         }
         .start-btn:hover { transform: scale(1.05); box-shadow: 0 0 30px #00ccff; }
+        .credits { margin-top: 20px; color: #6688aa; font-size: 0.7rem; }
         
         #game-ui { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; display: none; }
         #hud-top {
@@ -41,13 +57,39 @@
             font-size: 18px; font-weight: bold; text-shadow: 0 0 12px #f00, 0 0 6px #ffaa00; z-index: 100;
             background: rgba(0,0,0,0.6); padding: 6px 14px; border-radius: 25px;
         }
+        #warning {
+            position: absolute; bottom: 70px; right: 15px; color: #ffaa44; font-size: 11px;
+            background: rgba(0,0,0,0.7); padding: 4px 10px; border-radius: 15px; pointer-events: none; z-index: 100;
+        }
+        #ui-bottom {
+            position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.92);
+            padding: 10px 20px; border-top: 2px solid #0cf; display: flex; justify-content: space-between;
+            align-items: center; font-size: 12px; color: #0cf; pointer-events: auto; z-index: 102;
+        }
+        #pause-btn {
+            position: absolute; top: 15px; right: 20px; background: rgba(0,204,255,0.2);
+            border: 2px solid #00ccff; color: #00ccff; padding: 6px 14px; border-radius: 15px;
+            font-family: 'Orbitron', monospace; font-size: 11px; font-weight: bold; cursor: pointer; z-index: 200;
+        }
+        #pause-btn:hover { background: #0cf; color: #000; }
         #vr-status { position: absolute; top: 55px; right: 15px; background: rgba(0,0,0,0.7); padding: 4px 12px; border-radius: 15px; font-size: 9px; color: #0f0; z-index: 101; }
+        #vibration-indicator {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            color: #ff3333; font-weight: bold; font-size: 16px; background: rgba(0,0,0,0.7);
+            padding: 6px 20px; border-radius: 20px; display: none; z-index: 105;
+        }
+        
+        @media (max-width: 768px) {
+            .game-title { font-size: 1.5rem; }
+            #hud-top { font-size: 14px; }
+        }
+        button { font-family: inherit; }
     </style>
     <script type="importmap">
         {
             "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+                "three": "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/"
             }
         }
     </script>
@@ -56,71 +98,70 @@
 
     <div id="start-screen">
         <div class="start-card">
-            <h1 class="game-title">SPACE HUNTER VR: CLASES POO</h1>
-            <p style="color:#0cf; margin-bottom:20px;">Estructura por objetos unificada · Graficación TecNM</p>
+            <div class="vr-badge">🥽 META QUEST 3 · CABINA EN PRIMERA PERSONA 🥽</div>
+            <h1 class="game-title">SPACE HUNTER VR</h1>
+            <p style="color:#0cf;">Arquitectura Unificada de Clases POO con Módulos ES6</p>
+            
+            <div class="controls-vr">
+                <h3>🎮 CALIBRACIÓN DE MANDOS INTEGRADOS</h3>
+                <p><span class="vr-icon">🕹️ JOYSTICK IZQ</span> → Esquivar Lateral (X) y Altura (Y) de forma independiente</p>
+                <p><span class="vr-icon">🕹️ JOYSTICK DER</span> → Avanzar en Z (Hacia Arriba acelera continuamente)</p>
+                <p><span class="vr-icon">🔫 GATILLO</span> → Abrir fuego frontal rectilíneo / Confirmar Reinicio en Menú VR</p>
+                <p><span class="vr-icon">🎯 PUNTERO</span> → Retícula reactiva 3D (Cambia a ROJO al fijar enemigos)</p>
+            </div>
+            
             <button class="start-btn" id="start-btn">🚀 INICIAR MISIÓN VR 🚀</button>
+            <p class="credits">Valeria Abigail Villeda Hernández | Graficación - TecNM</p>
         </div>
     </div>
 
     <div id="game-ui">
         <div id="hud-top">💥 Score: <span id="score-val">0</span> | 🛡️ Escudos: <span id="hp-val">3</span>/3</div>
-        <div id="vr-status">⏳ Sincronizando mandos WebXR...</div>
+        <div id="warning">💎 ¡SISTEMA INERCIADO COMPLETO ACTIVO! 💎</div>
+        <div id="vibration-indicator">📳 ¡IMPACTO! 📳</div>
+        
+        <div id="ui-bottom">
+            <div>🛸 CABINA VR INTEGRAL | Enemigos barren en Y · Esquivas en Eje X</div>
+            <div>⌨️ PC: WASD para maniobrar + ESPACIO para abrir fuego</div>
+        </div>
     </div>
+
+    <button id="pause-btn">⏸ PAUSA</button>
 
     <script type="module">
         import * as THREE from 'three';
         import { VRButton } from 'three/addons/webxr/VRButton.js';
 
-        // Globales del motor de simulación
-        let scene, camera, renderer, clock;
-        let playerShip, vrHUD;
-        let enemies = [], obstacles = [], playerBullets = [], enemyBullets = [];
-        let score = 0, hp = 3, difficulty = 1;
-        let isPaused = false, gameActive = false;
-        let spawnTimer = 0, enemyTimer = 0;
-
-        const FRICTION = 0.94;
-        const FLOTATION_ACCEL = 3.0;
-
-        // Audios globales asíncronos antibloqueo
-        const bgMusic = new Audio('assets/audio/space_ambient.mp3'); bgMusic.loop = true; bgMusic.volume = 0.2;
-        const laserSound = new Audio('assets/audio/laser.mp3'); laserSound.volume = 0.2;
-        const enemyLaserSound = new Audio('assets/audio/laser2.mp3'); enemyLaserSound.volume = 0.15;
-        const explosionSound = new Audio('assets/audio/explosion.mp3'); explosionSound.volume = 0.3;
-
-        function playSound(snd) { try { snd.cloneNode().play().catch(()=>{}); } catch(e) {} }
-
         // ============================================================
-        // CLASE: PLAYER (TÚ ERES LA NAVE - INTEGRACIÓN COMPACTA VR)
+        // CLASE: PLAYER (MANEJO DEL CHASIS Y FÍSICAS DE LA NAVE)
         // ============================================================
         class Player {
             constructor(userContainer) {
-                this.container = userContainer; // userGroup completo de la cabina
+                this.container = userContainer; // Recibe el userGroup de la cabina
                 this.meshGroup = new THREE.Group();
                 this.container.add(this.meshGroup);
 
                 this.velocityX = 0;
                 this.velocityY = 0;
                 this.velocityZ = 0;
+                this.FRICTION = 0.94;
+                this.FLOTATION_ACCEL = 3.0;
 
                 this.leftStickX = 0; this.leftStickY = 0; this.rightStickY = 0;
-                this.shipYaw = 0; this.floatOffset = 0;
+                this.leftGamepad = null; this.rightGamepad = null;
+                this.floatOffset = 0;
 
                 this.buildProceduralModel();
             }
 
             buildProceduralModel() {
-                const body = new THREE.Mesh(
-                    new THREE.ConeGeometry(28, 66, 32),
-                    new THREE.MeshStandardMaterial({ color: 0x3388ff, metalness: 0.9, roughness: 0.2, emissive: 0x002244 })
-                );
+                const bodyGeo = new THREE.ConeGeometry(28, 66, 32);
+                const bodyMat = new THREE.MeshStandardMaterial({ color: 0x3388ff, metalness: 0.9, roughness: 0.2, emissive: 0x002244 });
+                const body = new THREE.Mesh(bodyGeo, bodyMat);
                 body.rotation.x = Math.PI / 2;
                 this.meshGroup.add(body);
 
-                const cockpit = new THREE.Mesh(
-                    new THREE.SphereGeometry(12, 24, 24),
-                    new THREE.MeshStandardMaterial({ color: 0xaaddff, emissive: 0x2277aa, transparent: true, opacity: 0.3 })
-                );
+                const cockpit = new THREE.Mesh(new THREE.SphereGeometry(12, 24, 24), new THREE.MeshStandardMaterial({ color: 0xaaddff, emissive: 0x2277aa, transparent: true, opacity: 0.3 }));
                 cockpit.position.set(0, 5, 12);
                 this.meshGroup.add(cockpit);
 
@@ -128,7 +169,7 @@
                 const leftWing = new THREE.Mesh(new THREE.BoxGeometry(46, 5, 22), wingMat); leftWing.position.set(-42, -2, -15); this.meshGroup.add(leftWing);
                 const rightWing = new THREE.Mesh(new THREE.BoxGeometry(46, 5, 22), wingMat); rightWing.position.set(42, -2, -15); this.meshGroup.add(rightWing);
 
-                // Ubicación fija de cabina en primera persona frente a tus ojos
+                // Calibración síncrona frontal en primera persona
                 this.meshGroup.position.set(0, -10, -15);
             }
 
@@ -139,62 +180,52 @@
                         if (source.handedness === 'left') {
                             this.leftStickX = source.gamepad.axes[0] || 0;
                             this.leftStickY = source.gamepad.axes[1] || 0;
+                            this.leftGamepad = source.gamepad;
                         } else if (source.handedness === 'right') {
                             this.rightStickY = source.gamepad.axes[3] || 0;
+                            this.rightGamepad = source.gamepad;
                         }
                     }
                 }
             }
 
-            updatePhysics(deltaTime, keys) {
+            updatePhysics(keysPressed) {
                 let accelX = 0, accelY = 0, targetZ = 0;
 
                 if (renderer.xr.isPresenting) {
-                    if (Math.abs(this.leftStickX) > 0.12) accelX = this.leftStickX * FLOTATION_ACCEL;
-                    if (Math.abs(this.leftStickY) > 0.12) accelY = -this.leftStickY * FLOTATION_ACCEL;
-                    if (this.rightStickY < -0.12) targetZ = Math.abs(this.rightStickY) * 210;
+                    if (Math.abs(this.leftStickX) > 0.12) accelX = this.leftStickX * this.FLOTATION_ACCEL;
+                    if (Math.abs(this.leftStickY) > 0.12) accelY = -this.leftStickY * this.FLOTATION_ACCEL; 
+                    if (this.rightStickY < -0.12) targetZ = Math.abs(this.rightStickY) * 210; 
                 } else {
-                    if (keys['KeyA']) accelX = -FLOTATION_ACCEL; if (keys['KeyD']) accelX = FLOTATION_ACCEL;
-                    if (keys['KeyW']) accelY = FLOTATION_ACCEL; if (keys['KeyS']) accelY = -FLOTATION_ACCEL;
-                    if (keys['ShiftLeft']) targetZ = 130;
+                    if (keysPressed['KeyA']) accelX = -this.FLOTATION_ACCEL; if (keysPressed['KeyD']) accelX = this.FLOTATION_ACCEL;
+                    if (keysPressed['KeyW']) accelY = this.FLOTATION_ACCEL; if (keysPressed['KeyS']) accelY = -this.FLOTATION_ACCEL;
+                    if (keysPressed['ShiftLeft']) targetZ = 130;
                 }
 
-                this.velocityX += accelX; this.velocityX *= FRICTION;
-                this.velocityY += accelY; this.velocityY *= FRICTION;
+                // OPERACIÓN FISICA AISLADA DE LOS EJES (Se reparó la anulación en Y de raíz)
+                this.velocityX += accelX; this.velocityX *= this.FRICTION; 
+                this.velocityY += accelY; this.velocityY *= this.FRICTION; 
                 this.velocityZ = THREE.MathUtils.lerp(this.velocityZ, targetZ, 0.075);
 
-                // TRASLACIÓN MUNDIAL COMPLETA DEL NODO USERGROUP
+                // TRASLACIÓN MATRICIAL CONJUNTA
                 this.container.position.x += this.velocityX;
                 this.container.position.y += this.velocityY;
-                this.container.position.z -= (this.velocityZ * 0.15 + 6);
+                this.container.position.z -= (this.velocityZ * 0.15 + 6); 
 
-                // Límites de seguridad
+                // Límites perimetrales de la arena cósmica
                 this.container.position.x = Math.min(8500, Math.max(-8500, this.container.position.x));
                 this.container.position.y = Math.min(4500, Math.max(-2500, this.container.position.y));
 
-                // Balanceo inercial estético de los alerones locales
+                // Alabeo estético inercial en las alas de tu nave
                 this.floatOffset += 0.025;
                 this.meshGroup.rotation.z = THREE.MathUtils.lerp(this.meshGroup.rotation.z, -this.velocityX * 0.045, 0.12);
                 this.meshGroup.rotation.x = THREE.MathUtils.lerp(this.meshGroup.rotation.x, this.velocityY * 0.025, 0.12);
-                this.meshGroup.position.y = -10 + Math.sin(this.floatOffset) * 0.12;
-            }
-
-            fire() {
-                playSound(laserSound);
-                const bullet = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 115, 12), new THREE.MeshStandardMaterial({ color: 0x44ffff, emissive: 0x00bbff }));
-                bullet.rotation.x = Math.PI / 2;
-                
-                const worldPos = new THREE.Vector3(); this.meshGroup.getWorldPosition(worldPos);
-                bullet.position.copy(worldPos);
-
-                const straightDir = new THREE.Vector3(0, 0, -1).normalize();
-                bullet.userData = { direction: straightDir, speed: 460 };
-                scene.add(bullet); playerBullets.push(bullet);
+                this.meshGroup.position.y = -10 + Math.sin(this.floatOffset) * 0.12; 
             }
         }
 
         // ============================================================
-        // CLASE: VRHOLOGRAPHICHUD (MENÚ 3D EN EL VISOR AL PERDER)
+        // CLASE: VRHOLOGRAPHICHUD (MENÚ 3D DE REINICIO ADENTRO DEL VISOR)
         // ============================================================
         class VRHolographicHUD {
             constructor(parentContainer) {
@@ -207,26 +238,321 @@
                 const canvas = document.createElement('canvas');
                 canvas.width = 512; canvas.height = 256;
                 const ctx = canvas.getContext('2d');
-
+                
                 ctx.fillStyle = 'rgba(12, 12, 50, 0.95)'; ctx.fillRect(0, 0, 512, 256);
                 ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 6; ctx.strokeRect(10, 10, 492, 236);
                 ctx.fillStyle = '#ff3333'; ctx.font = 'bold 36px Orbitron, sans-serif'; ctx.textAlign = 'center';
                 ctx.fillText('MISIÓN FALLIDA', 256, 75);
                 ctx.fillStyle = '#ffffff'; ctx.font = '20px monospace'; ctx.fillText('Tus escudos han colapsado.', 256, 125);
                 ctx.fillStyle = '#ffe81f'; ctx.font = 'bold 24px Orbitron, sans-serif'; ctx.fillText('👉 PRESIONA GATILLO 👈', 256, 185);
-
+                
                 const texture = new THREE.CanvasTexture(canvas);
                 this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(60, 30), new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide }));
-                this.mesh.position.set(0, 0, -50); // Frente a tus ojos
+                this.mesh.position.set(0, 0, -50); // Justo suspendida frente a tu cara
                 this.container.add(this.mesh);
                 this.mesh.visible = false;
             }
 
-            show(visible) { if (this.mesh) this.mesh.visible = visible; }
+            show(status) { if (this.mesh) this.mesh.visible = status; }
         }
 
-        // ---------- INSTANCIACIÓN DE SISTEMAS ----------
-        const keysPressed = {};
+        // ============================================================
+        // CLASE: GAME (NÚCLEO PRINCIPAL CONTROLADOR DE COMPILACIÓN)
+        // ============================================================
+        class Game {
+            constructor(rendererInstance) {
+                this.renderer = rendererInstance;
+                this.scene = scene;
+                this.camera = camera;
+
+                this.userGroup = userGroup;
+                this.playerShip = null;
+                this.vrHUD = null;
+
+                this.scoreElem = document.getElementById('score-val');
+                this.hpElem = document.getElementById('hp-val');
+
+                this.keysPressed = {};
+                this.spawnTimer = 0; this.enemyTimer = 0;
+
+                // Inicializar recursos de audio locales de forma segura
+                this.bgMusic = new Audio('assets/audio/space_ambient.mp3'); this.bgMusic.loop = true; this.bgMusic.volume = 0.2;
+                this.laserSound = new Audio('assets/audio/laser.mp3'); this.laserSound.volume = 0.2;
+                this.enemyLaserSound = new Audio('assets/audio/laser2.mp3'); this.enemyLaserSound.volume = 0.15;
+                this.explosionSound = new Audio('assets/audio/explosion.mp3'); this.explosionSound.volume = 0.3;
+            }
+
+            playSound(snd) { try { snd.cloneNode().play().catch(() => {}); } catch(e) {} }
+
+            init() {
+                // Instanciación de componentes POO
+                this.playerShip = new Player(this.userGroup);
+                this.vrHUD = new VRHolographicHUD(this.userGroup);
+
+                this.setupEnvironment();
+                this.setupInputListeners();
+
+                // Disparador del botón de inicio de interfaz HTML
+                document.getElementById('start-btn').addEventListener('click', () => {
+                    document.getElementById('start-screen').style.display = 'none';
+                    document.getElementById('game-ui').style.display = 'block';
+                    gameActive = true;
+                    this.bgMusic.play().catch(() => {});
+                    this.resetGame();
+                });
+
+                // Inicializador oficial del ciclo WebXR
+                this.renderer.setAnimationLoop(() => {
+                    this.update();
+                    this.renderer.render(this.scene, this.camera);
+                });
+            }
+
+            setupEnvironment() {
+                this.scene.add(new THREE.AmbientLight(0x303060, 0.65));
+                const dirLight = new THREE.DirectionalLight(0xffeedd, 1.8); dirLight.position.set(600, 1000, 400); this.scene.add(dirLight);
+                this.shipLight = new THREE.PointLight(0x33aaff, 2.4, 1400); this.scene.add(this.shipLight);
+
+                // Generar campo de estrellas
+                const starsGeo = new THREE.BufferGeometry();
+                const starsPos = new Float32Array(6000 * 3);
+                for (let i = 0; i < 6000; i++) {
+                    starsPos[i*3] = (Math.random() - 0.5) * 22000;
+                    starsPos[i*3+1] = (Math.random() - 0.5) * 16000;
+                    starsPos[i*3+2] = (Math.random() - 0.5) * 18000;
+                }
+                starsGeo.setAttribute('position', new THREE.BufferAttribute(starsPos, 3));
+                this.starField = new THREE.Points(starsGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 1.4, transparent: true }));
+                this.scene.add(this.starField);
+
+                // Mapear textura de meteorito local
+                this.rockMat = new THREE.MeshStandardMaterial({ color: 0xaa8866, roughness: 0.7, metalness: 0.1 });
+                const texLoader = new THREE.TextureLoader();
+                texLoader.load('assets/textures/metorito.jpg', (texture) => { this.rockMat.map = texture; this.rockMat.needsUpdate = true; });
+                this.rockGeometries = [new THREE.DodecahedronGeometry(28, 0), new THREE.IcosahedronGeometry(30, 0)];
+            }
+
+            setupInputListeners() {
+                this.renderer.xr.addEventListener('sessionstart', () => {
+                    const session = this.renderer.xr.getSession();
+                    session.addEventListener('selectstart', () => this.handleTriggerPress());
+                    document.getElementById('vr-status').innerHTML = '✅ Mandos y Haptics Listos | VR Activo';
+                    document.getElementById('vr-status').style.color = '#0f0';
+                });
+
+                window.addEventListener('keydown', (e) => {
+                    this.keysPressed[e.code] = true;
+                    if (e.code === 'Space') { e.preventDefault(); this.handleTriggerPress(); }
+                    if (e.code === 'KeyR' && hp <= 0) this.resetGame();
+                });
+                window.addEventListener('keyup', (e) => this.keysPressed[e.code] = false);
+
+                // Botón de pausa HTML
+                const pauseBtn = document.getElementById('pause-btn');
+                pauseBtn.addEventListener('click', () => {
+                    if (!gameActive) return;
+                    isPaused = !isPaused;
+                    if (!isPaused) this.bgMusic.play().catch(()=>{}); else this.bgMusic.pause();
+                    pauseBtn.textContent = isPaused ? "▶ REANUDAR" : "⏸ PAUSA";
+                });
+            }
+
+            handleTriggerPress() {
+                if (hp <= 0) {
+                    this.resetGame();
+                } else if (gameActive && !isPaused) {
+                    this.playerShip.updateInputs(this.renderer.xr.getSession());
+                    this.fireBullet();
+                }
+            }
+
+            fireBullet() {
+                this.playSound(this.laserSound);
+                const bullet = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 115, 12), new THREE.MeshStandardMaterial({ color: 0x44ffff, emissive: 0x00bbff }));
+                bullet.rotation.x = Math.PI / 2;
+                
+                const worldPos = new THREE.Vector3(); this.playerShip.meshGroup.getWorldPosition(worldPos);
+                bullet.position.copy(worldPos);
+                
+                const straightDir = new THREE.Vector3(0, 0, -1).normalize();
+                bullet.userData = { direction: straightDir, speed: 460 };
+                this.scene.add(bullet); playerBullets.push(bullet);
+            }
+
+            enemyShoot(enemyMesh) {
+                this.playSound(this.enemyLaserSound);
+                const eLaser = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 80, 8), new THREE.MeshStandardMaterial({ color: 0xff4422, emissive: 0xff1100 }));
+                eLaser.rotation.x = Math.PI / 2; eLaser.position.copy(enemyMesh.position);
+                
+                const playerWorldPos = new THREE.Vector3(); this.playerShip.meshGroup.getWorldPosition(playerWorldPos);
+                const dir = new THREE.Vector3().subVectors(playerWorldPos, enemyMesh.position);
+                
+                // DISPAROS ENEMIGOS EN EL EJE Y: Plasma barre de forma vertical
+                dir.y += (Math.random() - 0.5) * 55; 
+                dir.normalize();
+                
+                eLaser.userData = { direction: dir, speed: 195 };
+                this.scene.add(eLaser); enemyBullets.push(eLaser);
+            }
+
+            spawnObstacle() {
+                const geo = this.rockGeometries[Math.floor(Math.random() * this.rockGeometries.length)];
+                const rock = new THREE.Mesh(geo, this.rockMat);
+                rock.scale.setScalar(0.65 + Math.random() * 1.6);
+                const worldPos = this.userGroup.position;
+                rock.position.set(worldPos.x + (Math.random()-0.5)*7000, worldPos.y + (Math.random()-0.5)*4500, worldPos.z - 9000 - Math.random()*6000);
+                this.scene.add(rock); obstacles.push(rock);
+            }
+
+            spawnEnemy() {
+                const group = new THREE.Group();
+                const enemyBody = new THREE.Mesh(new THREE.CylinderGeometry(20, 26, 44, 12), new THREE.MeshStandardMaterial({ color: 0xdd4422, emissive: 0x441100 }));
+                enemyBody.rotation.x = Math.PI / 2; group.add(enemyBody);
+                
+                const aura = new THREE.Mesh(new THREE.SphereGeometry(34, 8, 8), new THREE.MeshBasicMaterial({ color: 0xff3300, transparent: true, opacity: 0.25 }));
+                group.add(aura);
+                
+                const worldPos = this.userGroup.position;
+                group.position.set(worldPos.x + (Math.random()-0.5)*4800, worldPos.y + (Math.random()-0.5)*3200, worldPos.z - 7000 - Math.random()*4000);
+                this.scene.add(group); enemies.push({ mesh: group, speed: 14 + Math.random() * 12, lastShot: Date.now() });
+            }
+
+            createExplosion(pos) {
+                this.playSound(this.explosionSound);
+                const count = 45; const geoExp = new THREE.BufferGeometry();
+                const positions = []; const velocities = [];
+                for (let i = 0; i < count; i++) {
+                    positions.push(pos.x, pos.y, pos.z);
+                    velocities.push((Math.random() - 0.5) * 140, (Math.random() - 0.5) * 140, (Math.random() - 0.5) * 140);
+                }
+                geoExp.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+                const expMat = new THREE.PointsMaterial({ color: 0xff7700, size: 28, transparent: true });
+                const particleSys = new THREE.Points(geoExp, expMat); this.scene.add(particleSys);
+                const startTime = Date.now();
+                function animateExplosion() {
+                    const elapsed = (Date.now() - startTime) / 1000;
+                    if (elapsed > 0.65) { scene.remove(particleSys); return; }
+                    const arr = particleSys.geometry.attributes.position.array;
+                    for (let i = 0; i < count; i++) {
+                        arr[i*3] += velocities[i*3] * 0.018; arr[i*3+1] += velocities[i*3+1] * 0.018; arr[i*3+2] += velocities[i*3+2] * 0.018;
+                    }
+                    particleSys.geometry.attributes.position.needsUpdate = true;
+                    requestAnimationFrame(animateExplosion);
+                }
+                animateExplosion();
+            }
+
+            handleCollision() {
+                if (!gameActive || hp <= 0) return;
+                this.playerShip.vibrateControllers(1.0, 550);
+                hp--; this.hpElem.innerText = hp;
+                const impactPos = new THREE.Vector3(); this.playerShip.meshGroup.getWorldPosition(impactPos);
+                this.createExplosion(impactPos);
+                
+                if (hp <= 0) {
+                    gameActive = false; isPaused = true; this.bgMusic.pause();
+                    this.playerShip.vibrateControllers(1.2, 900);
+                    if (this.vrHUD) this.vrHUD.show(true);
+                }
+            }
+
+            resetGame() {
+                hp = 3; score = 0; difficulty = 1; gameActive = true; isPaused = false;
+                this.hpElem.innerText = hp; this.scoreElem.innerText = score;
+                if (this.vrHUD) this.vrHUD.show(false);
+                this.bgMusic.currentTime = 0; this.bgMusic.play().catch(() => {});
+                
+                enemies.forEach(e => this.scene.remove(e.mesh)); enemies = [];
+                obstacles.forEach(o => this.scene.remove(o)); obstacles = [];
+                playerBullets.forEach(b => this.scene.remove(b)); playerBullets = [];
+                enemyBullets.forEach(b => this.scene.remove(b)); enemyBullets = [];
+                
+                this.userGroup.position.set(0, 0, 0); this.userGroup.rotation.set(0, 0, 0);
+                this.playerShip.meshGroup.position.set(0, -10, -15);
+            }
+
+            update() {
+                if (!gameActive || isPaused || hp <= 0) return;
+
+                this.playerShip.updateInputs(this.renderer.xr.getSession());
+                this.playerShip.updatePhysics(this.keysPressed);
+
+                this.shipLight.position.copy(this.userGroup.position);
+                const playerWorldPos = new THREE.Vector3(); this.playerShip.meshGroup.getWorldPosition(playerWorldPos);
+
+                // Evaluación óptica del Raycaster desde el visor Meta Quest
+                const rayOrigin = new THREE.Vector3(); camera.getWorldPosition(rayOrigin);
+                const rayDirection = new THREE.Vector3(0, 0, -1).applyQuaternion(this.userGroup.quaternion).normalize();
+                raycaster.set(rayOrigin, rayDirection);
+                
+                const enemyMeshes = enemies.map(e => e.mesh);
+                const intersects = raycaster.intersectObjects(enemyMeshes, true);
+                
+                if (intersects.length > 0) {
+                    crosshair.material.color.setHex(0xff0033); crosshair.scale.setScalar(1.25);
+                } else {
+                    crosshair.material.color.setHex(0x00ffff); crosshair.scale.setScalar(1.0);
+                }
+
+                // Reloj de Spawns
+                this.spawnTimer++; this.enemyTimer++;
+                if (this.spawnTimer >= Math.max(11, 27 - difficulty)) { this.spawnTimer = 0; this.spawnObstacle(); }
+                if (this.enemyTimer >= Math.max(22, 65 - difficulty * 4)) { this.enemyTimer = 0; this.spawnEnemy(); }
+
+                // Procesamiento Obstáculos
+                for (let i = obstacles.length - 1; i >= 0; i--) {
+                    const obs = obstacles[i]; obs.position.z += 28;
+                    if (obs.position.distanceTo(playerWorldPos) < 115) {
+                        this.handleCollision(); this.scene.remove(obs); obstacles.splice(i, 1);
+                    } else if (obs.position.z > playerWorldPos.z + 2000) { this.scene.remove(obs); obstacles.splice(i, 1); }
+                }
+
+                // Procesamiento Flotas Enemigas
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    const e = enemies[i]; e.mesh.position.z += e.speed;
+                    e.mesh.position.x += (playerWorldPos.x - e.mesh.position.x) * 0.0035;
+                    e.mesh.position.y += (playerWorldPos.y - e.mesh.position.y) * 0.004;
+                    e.mesh.lookAt(playerWorldPos);
+                    if (Date.now() - e.lastShot > 1650 && e.mesh.position.z < playerWorldPos.z - 200) { this.enemyShoot(e.mesh); e.lastShot = Date.now(); }
+                    if (e.mesh.position.distanceTo(playerWorldPos) < 115) {
+                        this.handleCollision(); this.scene.remove(e.mesh); enemies.splice(i, 1);
+                    } else if (e.mesh.position.z > playerWorldPos.z + 1800) { this.scene.remove(e.mesh); enemies.splice(i, 1); }
+                }
+
+                // Trayectorias Láser Propias
+                for (let i = playerBullets.length - 1; i >= 0; i--) {
+                    const b = playerBullets[i];
+                    b.position.x += b.userData.direction.x * b.userData.speed * 0.016;
+                    b.position.y += b.userData.direction.y * b.userData.speed * 0.016;
+                    b.position.z += b.userData.direction.z * b.userData.speed * 0.016;
+                    let hit = false;
+                    for (let j = enemies.length - 1; j >= 0; j--) {
+                        if (b.position.distanceTo(enemies[j].mesh.position) < 120) {
+                            this.createExplosion(enemies[j].mesh.position); this.scene.remove(enemies[j].mesh); enemies.splice(j, 1);
+                            hit = true; score++; this.scoreElem.innerText = score;
+                            difficulty = Math.min(10, Math.floor(score / 4) + 1); break;
+                        }
+                    }
+                    if (hit || Math.abs(b.position.z - playerWorldPos.z) > 5500) { this.scene.remove(b); playerBullets.splice(i, 1); }
+                }
+
+                // Trayectorias Láseres Enemigos
+                for (let i = enemyBullets.length - 1; i >= 0; i--) {
+                    const eb = enemyBullets[i];
+                    eb.position.x += eb.userData.direction.x * eb.userData.speed * 0.018;
+                    eb.position.y += eb.userData.direction.y * eb.userData.speed * 0.018;
+                    eb.position.z += eb.userData.direction.z * eb.userData.speed * 0.018;
+                    if (eb.position.distanceTo(playerWorldPos) < 70) {
+                        this.handleCollision(); this.scene.remove(eb); enemyBullets.splice(i, 1);
+                    } else if (Math.abs(eb.position.z - playerWorldPos.z) > 5500) { this.scene.remove(eb); enemyBullets.splice(i, 1); }
+                }
+
+                this.starField.rotation.y += 0.0002;
+            }
+        }
+
+        // ---------- DECLARACIÓN DE INSTANCIAS GLOBALES ----------
+        const userGroup = new THREE.Group();
         const crosshairGeo = new THREE.RingGeometry(1.8, 2.4, 16);
         const crosshairMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
         const crosshair = new THREE.Mesh(crosshairGeo, crosshairMat);
@@ -234,199 +560,25 @@
         userGroup.add(crosshair);
 
         const raycaster = new THREE.Raycaster();
-        const rockMat = new THREE.MeshStandardMaterial({ color: 0xaa8866, roughness: 0.7, metalness: 0.1 });
-        const rockGeometries = [new THREE.DodecahedronGeometry(28, 0), new THREE.IcosahedronGeometry(30, 0)];
+        let enemies = [], obstacles = [], playerBullets = [], enemyBullets = [];
+        let score = 0, hp = 3, difficulty = 1;
+        let isPaused = false, gameActive = false;
 
-        // Spawners de Entorno
-        function spawnObstacle() {
-            const geo = rockGeometries[Math.floor(Math.random() * rockGeometries.length)];
-            const rock = new THREE.Mesh(geo, rockMat);
-            rock.scale.setScalar(0.65 + Math.random() * 1.6);
-            rock.position.set(userGroup.position.x + (Math.random()-0.5)*7000, userGroup.position.y + (Math.random()-0.5)*4500, userGroup.position.z - 9000 - Math.random()*6000);
-            scene.add(rock); obstacles.push(rock);
-        }
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.3, 28000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.xr.enabled = true;
+        document.body.appendChild(renderer.domElement);
+        document.body.appendChild(VRButton.createButton(renderer));
 
-        function spawnEnemy() {
-            const group = new THREE.Group();
-            const body = new THREE.Mesh(new THREE.CylinderGeometry(20, 26, 44, 12), new THREE.MeshStandardMaterial({ color: 0xdd4422, emissive: 0x441100 }));
-            body.rotation.x = Math.PI / 2; group.add(body);
-            group.position.set(userGroup.position.x + (Math.random()-0.5)*4800, userGroup.position.y + (Math.random()-0.5)*3200, userGroup.position.z - 7000 - Math.random()*4000);
-            scene.add(group); enemies.push({ mesh: group, speed: 14 + Math.random() * 12, lastShot: Date.now() });
-        }
+        // Lanzamiento inicial del Game Core
+        const coreGame = new Game(renderer);
+        coreGame.init();
 
-        function createExplosion(pos) {
-            playSound(explosionSound);
-            const count = 45; const geoExp = new THREE.BufferGeometry();
-            const positions = []; const velocities = [];
-            for (let i = 0; i < count; i++) {
-                positions.push(pos.x, pos.y, pos.z);
-                velocities.push((Math.random() - 0.5) * 140, (Math.random() - 0.5) * 140, (Math.random() - 0.5) * 140);
-            }
-            geoExp.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-            const expMat = new THREE.PointsMaterial({ color: 0xff7700, size: 28, transparent: true });
-            const particleSys = new THREE.Points(geoExp, expMat); scene.add(particleSys);
-            const startTime = Date.now();
-            function animateExplosion() {
-                const elapsed = (Date.now() - startTime) / 1000;
-                if (elapsed > 0.65) { scene.remove(particleSys); return; }
-                const arr = particleSys.geometry.attributes.position.array;
-                for (let i = 0; i < count; i++) {
-                    arr[i*3] += velocities[i*3] * 0.018; arr[i*3+1] += velocities[i*3+1] * 0.018; arr[i*3+2] += velocities[i*3+2] * 0.018;
-                }
-                particleSys.geometry.attributes.position.needsUpdate = true;
-                requestAnimationFrame(animateExplosion);
-            }
-            animateExplosion();
-        }
-
-        function enemyShoot(enemyMesh) {
-            playSound(enemyLaserSound);
-            const eLaser = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 80, 8), new THREE.MeshStandardMaterial({ color: 0xff4422, emissive: 0xff1100 }));
-            eLaser.rotation.x = Math.PI / 2; eLaser.position.copy(enemyMesh.position);
-            
-            const playerWorldPos = new THREE.Vector3(); playerShip.meshGroup.getWorldPosition(playerWorldPos);
-            const dir = new THREE.Vector3().subVectors(playerWorldPos, enemyMesh.position);
-            dir.y += (Math.random() - 0.5) * 55; // Ataque barrido vertical en Y
-            dir.normalize();
-            
-            eLaser.userData = { direction: dir, speed: 195 };
-            scene.add(eLaser); enemyBullets.push(eLaser);
-        }
-
-        function handleCollision() {
-            if (!gameActive || hp <= 0) return;
-            vibrateControllers(1.0, 550);
-            hp--; document.getElementById('hp-val').innerText = hp;
-            const impactPos = new THREE.Vector3(); playerShip.meshGroup.getWorldPosition(impactPos);
-            createExplosion(impactPos);
-            
-            if (hp <= 0) {
-                gameActive = false; isPaused = true; bgMusic.pause();
-                vibrateControllers(1.2, 900);
-                vrHUD.show(true);
-            }
-        }
-
-        function resetGame() {
-            hp = 3; score = 0; difficulty = 1; gameActive = true; isPaused = false;
-            document.getElementById('hp-val').innerText = hp; document.getElementById('score-val').innerText = score;
-            vrHUD.show(false);
-            bgMusic.currentTime = 0; bgMusic.play().catch(() => {});
-            
-            enemies.forEach(e => scene.remove(e.mesh)); enemies = [];
-            obstacles.forEach(o => scene.remove(o)); obstacles = [];
-            playerBullets.forEach(b => scene.remove(b)); playerBullets = [];
-            enemyBullets.forEach(b => scene.remove(b)); enemyBullets = [];
-            
-            userGroup.position.set(0, 0, 0); userGroup.rotation.set(0, 0, 0);
-            playerShip.meshGroup.position.set(0, -10, -15);
-        }
-
-        function handleTriggerPress() {
-            if (hp <= 0) resetGame();
-            else if (gameActive && !isPaused) playerShip.fire();
-        }
-
-        // ---------- CORE INITIALIZATION ----------
-        function init() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x020210);
-            scene.add(userGroup); // Añadir el cajón VR a la escena
-
-            clock = new THREE.Clock();
-
-            // Instanciar clases POO
-            playerShip = new Player(userGroup);
-            vrHUD = new VRHolographicHUD(userGroup);
-
-            controllerLeft.addEventListener('selectstart', handleTriggerPress);
-            controllerRight.addEventListener('selectstart', handleTriggerPress);
-
-            document.getElementById('start-btn').addEventListener('click', () => {
-                document.getElementById('start-screen').style.display = 'none';
-                document.getElementById('game-ui').style.display = 'block';
-                gameActive = true; bgMusic.play().catch(() => {});
-                resetGame();
-            });
-
-            window.addEventListener('keydown', (e) => keysPressed[e.code] = true);
-            window.addEventListener('keyup', (e) => keysPressed[e.code] = false);
-        }
-
-        function updateGame() {
-            if (!gameActive || isPaused || hp <= 0) return;
-
-            playerShip.updateInputs(renderer.xr.getSession());
-            playerShip.updatePhysics(clock.getDelta(), keysPressed);
-
-            const playerWorldPos = new THREE.Vector3(); playerShip.meshGroup.getWorldPosition(playerWorldPos);
-
-            // Raycaster óptico reactivo para la mira
-            const rayOrigin = new THREE.Vector3(); camera.getWorldPosition(rayOrigin);
-            const rayDirection = new THREE.Vector3(0, 0, -1).applyQuaternion(userGroup.quaternion).normalize();
-            raycaster.set(rayOrigin, rayDirection);
-            const intersects = raycaster.intersectObjects(enemies.map(e => e.mesh), true);
-            crosshair.material.color.setHex(intersects.length > 0 ? 0xff0033 : 0x00ffff);
-
-            // Timers Spawns
-            spawnTimer++; enemyTimer++;
-            if (spawnTimer >= Math.max(11, 27 - difficulty)) { spawnTimer = 0; spawnObstacle(); }
-            if (enemyTimer >= Math.max(22, 65 - difficulty * 4)) { enemyTimer = 0; spawnEnemy(); }
-
-            // Procesar Obstáculos
-            for (let i = obstacles.length - 1; i >= 0; i--) {
-                const obs = obstacles[i]; obs.position.z += 28;
-                if (obs.position.distanceTo(playerWorldPos) < 115) {
-                    handleCollision(); scene.remove(obs); obstacles.splice(i, 1);
-                } else if (obs.position.z > playerWorldPos.z + 2000) { scene.remove(obs); obstacles.splice(i, 1); }
-            }
-
-            // Procesar Enemigos
-            for (let i = enemies.length - 1; i >= 0; i--) {
-                const e = enemies[i]; e.mesh.position.z += e.speed;
-                e.mesh.position.x += (playerWorldPos.x - e.mesh.position.x) * 0.0035;
-                e.mesh.position.y += (playerWorldPos.y - e.mesh.position.y) * 0.004;
-                e.mesh.lookAt(playerWorldPos);
-                if (Date.now() - e.lastShot > 1650 && e.mesh.position.z < playerWorldPos.z - 200) { enemyShoot(e.mesh); e.lastShot = Date.now(); }
-                if (e.mesh.position.distanceTo(playerWorldPos) < 115) {
-                    handleCollision(); scene.remove(e.mesh); enemies.splice(i, 1);
-                } else if (e.mesh.position.z > playerWorldPos.z + 2200) { scene.remove(e.mesh); enemies.splice(i, 1); }
-            }
-
-            // Balas propias
-            for (let i = playerBullets.length - 1; i >= 0; i--) {
-                const b = playerBullets[i];
-                b.position.x += b.userData.direction.x * b.userData.speed * 0.016;
-                b.position.y += b.userData.direction.y * b.userData.speed * 0.016;
-                b.position.z += b.userData.direction.z * b.userData.speed * 0.016;
-                let hit = false;
-                for (let j = enemies.length - 1; j >= 0; j--) {
-                    if (b.position.distanceTo(enemies[j].mesh.position) < 120) {
-                        createExplosion(enemies[j].mesh.position); scene.remove(enemies[j].mesh); enemies.splice(j, 1);
-                        hit = true; score++; scoreElem.innerText = score;
-                        difficulty = Math.min(10, Math.floor(score / 4) + 1); break;
-                    }
-                }
-                if (hit || Math.abs(b.position.z - playerWorldPos.z) > 5500) { scene.remove(b); playerBullets.splice(i, 1); }
-            }
-
-            // Balas enemigas
-            for (let i = enemyBullets.length - 1; i >= 0; i--) {
-                const eb = enemyBullets[i];
-                eb.position.x += eb.userData.direction.x * eb.userData.speed * 0.018;
-                eb.position.y += eb.userData.direction.y * eb.userData.speed * 0.018;
-                eb.position.z += eb.userData.direction.z * eb.userData.speed * 0.018;
-                if (eb.position.distanceTo(playerWorldPos) < 70) {
-                    handleCollision(); scene.remove(eb); enemyBullets.splice(i, 1);
-                } else if (Math.abs(eb.position.z - playerWorldPos.z) > 5500) { scene.remove(eb); enemyBullets.splice(i, 1); }
-            }
-            starField.rotation.y += 0.0002;
-        }
-
-        init();
-        renderer.setAnimationLoop(() => {
-            updateGame();
-            renderer.render(scene, camera);
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
 </body>
