@@ -234,7 +234,7 @@
     <div id="game-over-alert">
         <h2>💀 NAVE DESTRUIDA 💀</h2>
         <p>Tus escudos han colapsado en la misión.</p>
-        <button id="restart-btn">REINICIAR MISIÓN</button>
+        <button id="restart-btn">REINICIAR MISIÓN (PC)</button>
     </div>
     
     <div id="ui-bottom">
@@ -243,8 +243,8 @@
             <div style="color: #0cf; margin-top: 5px;">
                 <span class="key-box">↑/↓/←/→</span> Mover nave
                 <span class="key-box">W/S</span> Propulsores
-                <span class="key-box">ESPACIO</span> Disparo láser
-                <span style="margin-left: 12px;">✨ Modo VR Híbrido Soportado con Controles ✨</span>
+                <span class="key-box">ESPACIO</span> Disparo / Gatillo VR
+                <span class="key-box">R</span> Reiniciar en PC
             </div>
         </div>
         <div>🎓 Valeria Abigail Villeda Hernández | Práctica Integradora</div>
@@ -277,10 +277,9 @@
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.xr.enabled = true; // ACTIVACIÓN DE MOTOR WEBXR
+        renderer.xr.enabled = true;
         document.body.appendChild(renderer.domElement);
 
-        // Agregar el botón WebXR oficial a la interfaz
         const vrButton = VRButton.createButton(renderer);
         document.body.appendChild(vrButton);
 
@@ -291,7 +290,6 @@
         scene.add(userGroup);
         userGroup.add(camera);
 
-        // Controladores VR de las manos
         const controllerLeft = renderer.xr.getController(0);
         const controllerRight = renderer.xr.getController(1);
         userGroup.add(controllerLeft);
@@ -305,6 +303,18 @@
             document.getElementById('vr-status').innerText = '✅ Mandos VR Vinculados';
         });
 
+        // Eventos nativos de gatillo (selectstart) para control total de disparo y reinicios en VR
+        function handleVRTrigger() {
+            if (hp <= 0) {
+                resetGame(); // Si estás muerto, el gatillo reinicia el juego por completo
+            } else if (!isPaused) {
+                shoot(player, true); // Si estás vivo, dispara
+            }
+        }
+
+        controllerLeft.addEventListener('selectstart', handleVRTrigger);
+        controllerRight.addEventListener('selectstart', handleVRTrigger);
+
         function updateVRGamepadInputs() {
             const session = renderer.xr.getSession();
             if (!session?.inputSources) return;
@@ -314,15 +324,7 @@
                         leftStickX = source.gamepad.axes[0] || 0;
                         leftStickY = source.gamepad.axes[1] || 0;
                     } else if (source.handedness === 'right') {
-                        rightStickY = source.gamepad.axes[3] || 0; // Impulso W/S
-                        
-                        // Captura del gatillo derecho para disparar en el visor
-                        const triggerPressed = source.gamepad.buttons[0].pressed;
-                        const now = Date.now();
-                        if (triggerPressed && now - lastVRShotTime > 250 && !isPaused && hp > 0) {
-                            shoot(player, true);
-                            lastVRShotTime = now;
-                        }
+                        rightStickY = source.gamepad.axes[3] || 0;
                     }
                 }
             }
@@ -365,7 +367,7 @@
             }
         });
 
-        // ILUMINACIÓN PARA CONTRASTE Y BRILLO
+        // ILUMINACIÓN
         const ambientLight = new THREE.AmbientLight(0x555566, 0.65);
         scene.add(ambientLight);
         
@@ -390,7 +392,7 @@
         const stars = new THREE.Points(starGeometry, new THREE.PointsMaterial({ color: 0xffffff, size: 1.8 }));
         scene.add(stars);
 
-        // --- JUGADOR (Insertado dentro del userGroup para traslación síncrona XR) ---
+        // --- JUGADOR ---
         let player = new THREE.Group();
         userGroup.add(player);
         
@@ -425,8 +427,41 @@
             player.add(fbx);
         }, undefined, (err) => { console.log("Carga de FBX externa desactivada, modelo geométrico activado."); });
 
-        // Ajuste posicional enfrente del grupo de cámara
         player.position.set(0, -10, -150);
+
+        // ==============================================================
+        // NUEVO MENÚ DE REINICIO 3D HOLOGRÁFICO EN VR (CanvasTexture)
+        // ==============================================================
+        let vrMenuPlane = null;
+        function createVRMenu() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            
+            // Estética Cyberpunk / Alerta
+            ctx.fillStyle = 'rgba(15, 5, 5, 0.95)';
+            ctx.fillRect(0, 0, 512, 256);
+            ctx.strokeStyle = '#ff1100'; ctx.lineWidth = 8;
+            ctx.strokeRect(10, 10, 492, 236);
+            
+            ctx.fillStyle = '#ff3333'; ctx.font = 'bold 38px Orbitron, sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText('NAVE DESTRUIDA', 256, 80);
+            
+            ctx.fillStyle = '#ffffff'; ctx.font = '20px monospace';
+            ctx.fillText('Tus escudos han colapsado.', 256, 130);
+            
+            ctx.fillStyle = '#ffe81f'; ctx.font = 'bold 24px Orbitron, sans-serif';
+            ctx.fillText('👉 PULSA GATILLO VR 👈', 256, 195);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
+            vrMenuPlane = new THREE.Mesh(new THREE.PlaneGeometry(120, 60), mat);
+            
+            // Lo posicionamos flotando perfectamente enfrente de la cámara del usuario
+            vrMenuPlane.position.set(0, 10, -120);
+            userGroup.add(vrMenuPlane);
+            vrMenuPlane.visible = false; // Oculto al inicio
+        }
 
         // --------------------------------------------------------------
         // 4. SISTEMA DE OBJETOS Y ENEMIGOS CON DIFICULTAD DINÁMICA
@@ -550,7 +585,6 @@
             const enemyMesh = createEnemyShip();
             enemyMesh.scale.set(1.4, 1.4, 1.4);
             
-            // Spawn relativo a la posición global de la nave
             const currentZ = userGroup.position.z;
             enemyMesh.position.set(
                 userGroup.position.x + (Math.random() - 0.5) * 4500,
@@ -565,7 +599,6 @@
             });
         }
 
-        // Textura para meteoritos
         const texLoader = new THREE.TextureLoader();
         const rockTex = texLoader.load('assets/textures/metorito.jpg');
         
@@ -643,7 +676,7 @@
                 if (elapsed > 0.6) {
                     scene.remove(system);
                     scene.remove(flashLight);
-                    geometry.dispose(); // Recolección de basura para evitar tirones en VR
+                    geometry.dispose(); 
                     material.dispose();
                 } else {
                     const posAttr = system.geometry.attributes.position;
@@ -702,6 +735,10 @@
                 e.preventDefault();
                 shoot(player, true);
             }
+            // Tecla de reinicio física en PC
+            if (e.code === 'KeyR' && hp <= 0) {
+                resetGame();
+            }
         });
         window.addEventListener('keyup', (e) => keysPressed[e.code] = false);
 
@@ -713,7 +750,8 @@
             createExplosion(playerWorldPos);
             hpElem.innerText = hp;
             if (hp <= 0) {
-                gameOverAlert.style.display = 'block';
+                gameOverAlert.style.display = 'block'; // Menú PC alterno
+                if (vrMenuPlane) vrMenuPlane.visible = true; // Activar el menú holográfico 3D en VR
                 isPaused = true;
                 bgMusic.pause();
                 if (enemySpawnIntervalId) clearInterval(enemySpawnIntervalId);
@@ -729,6 +767,7 @@
             hpElem.innerText = hp;
             scoreElem.innerText = score;
             gameOverAlert.style.display = 'none';
+            if (vrMenuPlane) vrMenuPlane.visible = false; // Desvanecer el menú 3D
             isPaused = false;
             bgMusic.play().catch(e => {});
             document.getElementById('warning').innerHTML = "💎 ¡MONTÓN DE OBSTÁCULOS! ESQUIVALOS 💎";
@@ -737,9 +776,9 @@
             enemies = [];
             obstacles.forEach(ob => scene.remove(ob));
             obstacles = [];
-            playerBullets.forEach(b => scene.remove(b));
+            playerBullets.forEach(b => { scene.remove(b); });
             playerBullets.length = 0;
-            enemyBullets.forEach(b => scene.remove(b));
+            enemyBullets.forEach(b => { scene.remove(b); });
             enemyBullets.length = 0;
             
             userGroup.position.set(0, 0, 0);
@@ -755,19 +794,20 @@
         const keysPressed = {};
         let speedZ = 0;
 
+        createVRMenu(); // Inicializar el chasis del HUD 3D de reinicio
+
         function updateGame() {
             if (isPaused || hp <= 0) return;
 
             updateVRGamepadInputs();
 
-            // Sincronizar entradas híbridas (Mando VR izquierdo e Y del derecho / Teclado PC)
             let rawInputZ = keysPressed['KeyW'] ? 180 : (keysPressed['KeyS'] ? -50 : 0);
             if (renderer.xr.isPresenting && Math.abs(rightStickY) > 0.15) {
                 rawInputZ = -rightStickY * 180;
             }
             
             let targetSpeedZ = rawInputZ;
-            speedZ = THREE.MathUtils.lerp(speedZ, targetZ, 0.05);
+            speedZ = THREE.MathUtils.lerp(speedZ, targetSpeedZ, 0.05);
 
             let moveX = 0;
             let moveY = 0;
@@ -777,7 +817,6 @@
             if (keysPressed['ArrowUp']) moveY = 12;
             if (keysPressed['ArrowDown']) moveY = -12;
 
-            // Soporte de Joystick de traslación horizontal/vertical izquierdo en VR
             if (renderer.xr.isPresenting) {
                 if (Math.abs(leftStickX) > 0.15) moveX = leftStickX * 22;
                 if (Math.abs(leftStickY) > 0.15) moveY = -leftStickY * 16;
@@ -789,10 +828,8 @@
             player.position.x = Math.min(Math.max(player.position.x, -2500), 2500);
             player.position.y = Math.min(Math.max(player.position.y, -1100), 2000);
 
-            // Desplazamiento coordinado del chasis
-            userGroup.position.z -= (speedZ * 0.3 + 8); // Velocidad crucero base añadida para mantener flujo constante
+            userGroup.position.z -= (speedZ * 0.3 + 8); 
 
-            // Calibración de la cámara fluida (Solo modo PC, WebXR automatiza esto en visor)
             if (!renderer.xr.isPresenting) {
                 camera.position.lerp(new THREE.Vector3(player.position.x, player.position.y + 25, player.position.z + 185), 0.1);
                 camera.lookAt(player.position.x, player.position.y, player.position.z - 1000);
@@ -896,7 +933,6 @@
             stars.rotation.x += 0.0001;
         }
 
-        // Configuración nativa del bucle WebXR del dispositivo
         renderer.setAnimationLoop(() => {
             updateGame();
             renderer.render(scene, camera);
