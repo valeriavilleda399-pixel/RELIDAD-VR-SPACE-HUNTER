@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Space Hunter VR - Remap Controles | Valeria Abigail Villeda Hernández</title>
+    <title>Space Hunter VR - Red Squadron | Valeria Abigail Villeda Hernández</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', 'Courier New', monospace; }
@@ -98,16 +98,16 @@
 
     <div id="start-screen">
         <div class="start-card">
-            <div class="vr-badge">🥽 META QUEST 3 · CONTROLES ASIGNADOS 🥽</div>
+            <div class="vr-badge">🥽 META QUEST 3 · PERSPECTIVA ALTA VR 🥽</div>
             <h1 class="game-title">SPACE HUNTER VR</h1>
-            <p style="color:#0cf;">Mapeo Dinámico de Joysticks Corregido</p>
+            <p style="color:#0cf;">Físicas balísticas e inerciales fluidas</p>
             
             <div class="controls-vr">
                 <h3>🎮 CALIBRACIÓN DE MANDOS</h3>
-                <p><span class="vr-icon">🕹️ JOYSTICK IZQ</span> → Arriba/Abajo: Elevar nave o quedarse abajo</p>
-                <p><span class="vr-icon">🕹️ JOYSTICK DER</span> → Izq/Der: Girar rumbo 360° | Arriba: Acelerar propulsión</p>
-                <p><span class="vr-icon">🔫 GATILLO</span> → Disparar ráfaga láser / Confirmar Reinicio VR</p>
-                <p><span class="vr-icon">🥽 ENFOQUE</span> → Vista cinemática limpia holográfica</p>
+                <p><span class="vr-icon">🕹️ JOYSTICK IZQ</span> → Traslación inercial completa (Ejes X / Y)</p>
+                <p><span class="vr-icon">🕹️ JOYSTICK DER</span> → Giro de orientación 360° (X) + Velocidad Z (Y)</p>
+                <p><span class="vr-icon">🔫 GATILLO</span> → Disparo balístico dinámico con inercia de ala</p>
+                <p><span class="vr-icon">🥽 PERSPECTIVA</span> → Vista cenital / Seguimiento elevado por encima del chasis</p>
             </div>
             
             <button class="start-btn" id="start-btn">🚀 INICIAR MISIÓN VR 🚀</button>
@@ -117,11 +117,11 @@
 
     <div id="game-ui">
         <div id="hud-top">💥 <span id="score-val">0</span> | 🛡️ <span id="hp-val">3</span>/3</div>
-        <div id="warning">💎 ¡SISTEMA SINCRO-MATRIZ ACOPLADO! 💎</div>
+        <div id="warning">💎 ¡SISTEMA INERCIADO ACTIVADO! 💎</div>
         <div id="vibration-indicator">📳 ¡IMPACTO! 📳</div>
         
         <div id="ui-bottom">
-            <div>🛸 PERSPECTIVA VR | Controles asimétricos mapeados fluidos</div>
+            <div>🛸 ENFOQUE SUPERIOR VR | Disparos balísticos orgánicos fluidos</div>
             <div>⌨️ PC: WASD + Q/E girar + ESPACIO disparar / R reiniciar</div>
         </div>
     </div>
@@ -145,7 +145,7 @@
         document.body.appendChild(renderer.domElement);
         document.body.appendChild(VRButton.createButton(renderer));
         
-        // ---------- GRUPO COMPACTO DE CABINA ----------
+        // ---------- GRUPO COMPACTO (TÚ Y TU NAVE SE TRASLADAN JUNTOS) ----------
         const userGroup = new THREE.Group();  
         scene.add(userGroup);
         userGroup.add(camera);
@@ -245,12 +245,14 @@
         }
         player.add(buildShipModel());
         
-        player.position.set(0, -12, -45);
+        // Ubicada fija abajo frente al userGroup
+        player.position.set(0, -16, -45);
         player.rotation.set(0, 0, 0);
         
-        // Vista fija elevada detrás de la nave
-        camera.position.set(0, 22, 90); 
-        camera.lookAt(player.position);
+        // 👁️ ¡VISTA ELEVADA DESDE ARRIBA DE LA NAVE APUNTANDO HACIA ABAJO!
+        // Subimos en Y (32) y nos alejamos en Z (80) para dar la toma cenital perfecta
+        camera.position.set(0, 32, 80); 
+        camera.lookAt(player.position.x, player.position.y + 6, player.position.z);
 
         // ============================================================
         // MENÚ DE REINICIO 3D HOLOGRÁFICO FLOTANTE ELEVADO
@@ -281,7 +283,8 @@
             const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
             vrMenuPlane = new THREE.Mesh(new THREE.PlaneGeometry(100, 50), mat);
             
-            vrMenuPlane.position.set(0, 35, -40);
+            // Colocado flotando por encima del horizonte de colisión
+            vrMenuPlane.position.set(0, 45, -40);
             userGroup.add(vrMenuPlane);
             vrMenuPlane.visible = false;
         }
@@ -355,14 +358,28 @@
             animateExplosion();
         }
         
+        // ---------- DISPAROS ORGÁNICOS CON PROPAGACIÓN DE VELOCIDAD ----------
         function fireBullet() {
             playSound(laserSound);
-            const bullet = new THREE.Mesh(new THREE.CylinderGeometry(5, 5, 110, 12), new THREE.MeshStandardMaterial({ color: 0x44ffff, emissive: 0x00bbff }));
+            const bullet = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 115, 12), new THREE.MeshStandardMaterial({ color: 0x44ffff, emissive: 0x00bbff }));
             bullet.rotation.x = Math.PI / 2;
+            
             const worldPos = new THREE.Vector3(); player.getWorldPosition(worldPos);
             bullet.position.copy(worldPos);
-            const forwardDir = new THREE.Vector3(0, 0, -1).applyQuaternion(userGroup.quaternion);
-            bullet.userData = { direction: forwardDir, speed: 390 };
+            
+            // Dirección base hacia adelante
+            const baseDir = new THREE.Vector3(0, 0, -1).applyQuaternion(userGroup.quaternion);
+            
+            // INTEGRACIÓN ORGÁNICA: Sumamos de forma sutil la inercia del movimiento horizontal y vertical para que el tiro no sea rígido
+            baseDir.x += (velocityX * 0.0035);
+            baseDir.y += (velocityY * 0.0035);
+            
+            // Pequeña dispersión aleatoria realista balística
+            baseDir.x += (Math.random() - 0.5) * 0.015;
+            baseDir.y += (Math.random() - 0.5) * 0.015;
+            baseDir.normalize();
+            
+            bullet.userData = { direction: baseDir, speed: 410 };
             scene.add(bullet); playerBullets.push(bullet);
         }
         
@@ -403,7 +420,7 @@
             enemyBullets.forEach(b => scene.remove(b)); enemyBullets = [];
             
             userGroup.position.set(0, 0, 0); userGroup.rotation.set(0, 0, 0);
-            player.position.set(0, -12, -45); player.rotation.set(0, 0, 0);
+            player.position.set(0, -16, -45); player.rotation.set(0, 0, 0);
         }
         
         function handleTriggerPress() {
@@ -446,56 +463,49 @@
             let turnSpeed = 0;
             
             // ============================================================
-            // MAPEO REESTRUCTURADO Y CORREGIDO DE MAPA DE JOYSTICKS ASIMÉTRICOS:
+            // JOYSTICK IZQUIERDO COMPLETO COORDENADO (MOVIMIENTO X / Y INTEGRAL)
             // ============================================================
             if (renderer.xr.isPresenting) {
-                // 🕹️ JOYSTICK IZQUIERDO: Controla estrictamente la elevación vertical (Eje Y)
-                // - Hacia Arriba: Se eleva (accelY positivo)
-                // - Hacia Abajo: Desciende o se queda abajo (accelY negativo)
-                if (Math.abs(leftStickY) > 0.15) accelY = -leftStickY * FLOTATION_ACCEL;
+                // Joystick Izquierdo maneja fluidamente el esquive lateral (X) y altitud vertical (Y)
+                if (Math.abs(leftStickX) > 0.12) accelX = leftStickX * FLOTATION_ACCEL;
+                if (Math.abs(leftStickY) > 0.12) accelY = -leftStickY * FLOTATION_ACCEL; // Si lo dejas abajo, desciende de forma fija
                 
-                // 🕹️ JOYSTICK DERECHO: Controla el giro horizontal 360 y la propulsión frontal
-                // - Izq/Der: Rotación angular 360 (Eje X)
-                // - Hacia Arriba: Acelera hacia el frente (accelZ / targetZ positivo)
-                if (Math.abs(rightStickX) > 0.15) turnSpeed = rightStickX * 2.5;
-                if (rightStickY < -0.15) targetZ = Math.abs(rightStickY) * 200; // Joystick derecho hacia arriba acelera
+                // Joystick Derecho maneja rotación Y horizontal e impulso frontal
+                if (Math.abs(rightStickX) > 0.12) turnSpeed = rightStickX * 2.5;
+                if (rightStickY < -0.12) targetZ = Math.abs(rightStickY) * 200; 
             } else {
-                // Fallback Teclado Monitor PC
-                if (keys['KeyA']) turnSpeed = -2.5; if (keys['KeyD']) turnSpeed = 2.5;
+                if (keys['KeyA']) accelX = -FLOTATION_ACCEL; if (keys['KeyD']) accelX = FLOTATION_ACCEL;
                 if (keys['KeyW']) accelY = FLOTATION_ACCEL; if (keys['KeyS']) accelY = -FLOTATION_ACCEL;
+                if (keys['KeyQ']) turnSpeed = -2.5; if (keys['KeyE']) turnSpeed = 2.5;
                 if (keys['ShiftLeft']) targetZ = 120;
             }
             
-            // Acoplamiento físico con amortiguación inercial (Efecto Flotación)
-            velocityX *= FRICTION; 
+            velocityX += accelX; velocityX *= FRICTION; 
             velocityY += accelY; velocityY *= FRICTION;
             velocityZ = THREE.MathUtils.lerp(velocityZ, targetZ, 0.075);
             
-            // Aplicación de la rotación 360° en el eje Y al userGroup completo
+            // Giro horizontal 360° total
             shipYaw += turnSpeed * 0.018;
             userGroup.rotation.y = shipYaw;
             
-            // Vectores de proyección angular relativos al rumbo de tu mirada
             const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(userGroup.quaternion);
             const rightVec = new THREE.Vector3(1, 0, 0).applyQuaternion(userGroup.quaternion);
             
-            // TRASLACIÓN CONJUNTA SÍNCRONA: Mueve todo el módulo de cabina por la escena
-            userGroup.position.x += forward.x * velocityZ;
-            userGroup.position.z += forward.z * velocityZ;
-            userGroup.position.y += velocityY * 0.1;
-            
-            // Desplazamiento base automático inercial cósmico continuo
+            // TRASLACIÓN CONJUNTA INTEGRAL SÍNCRONA DE TODO EL MÓDULO USERGROUP (Tú eres la nave)
+            userGroup.position.x += rightVec.x * velocityX * 0.15 + forward.x * velocityZ;
+            userGroup.position.z += rightVec.z * velocityX * 0.15 + forward.z * velocityZ;
+            userGroup.position.y += velocityY * 0.15;
             userGroup.position.z -= 6; 
             
-            // Límites del mapa
-            userGroup.position.x = Math.min(7500, Math.max(-7500, userGroup.position.x));
-            userGroup.position.y = Math.min(4500, Math.max(-2500, userGroup.position.y));
+            // Límites absolutos del cuadrante universal
+            userGroup.position.x = Math.min(8500, Math.max(-8500, userGroup.position.x));
+            userGroup.position.y = Math.min(4800, Math.max(-2800, userGroup.position.y));
             
-            // Balanceo estético local inercial en los alerones (Afecta solo al modelo)
+            // Balanceo estético local inercial en los alerones corporales
             floatOffset += 0.025;
-            player.rotation.z = THREE.MathUtils.lerp(player.rotation.z, -turnSpeed * 0.08, 0.12);
+            player.rotation.z = THREE.MathUtils.lerp(player.rotation.z, -velocityX * 0.045, 0.12);
             player.rotation.x = THREE.MathUtils.lerp(player.rotation.x, velocityY * 0.025, 0.12);
-            player.position.y = -12 + Math.sin(floatOffset) * 0.18; 
+            player.position.y = -16 + Math.sin(floatOffset) * 0.18; 
             
             shipLight.position.copy(userGroup.position);
             
