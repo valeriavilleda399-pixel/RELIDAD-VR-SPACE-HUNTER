@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Space Hunter VR - Nave Enderezada | Valeria Abigail Villeda Hernández</title>
+    <title>Space Hunter VR - Red Squadron | Valeria Abigail Villeda Hernández</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', 'Courier New', monospace; }
@@ -93,7 +93,7 @@
 
     <div id="start-screen">
         <div class="start-card">
-            <div class="vr-badge">🥽 MODO VR - NAVE ENDEREZADA 🥽</div>
+            <div class="vr-badge">🥽 MODO VR - ENTORNO INTEGRADO 🥽</div>
             <h1 class="game-title">SPACE HUNTER: RED SQUADRON</h1>
             <p style="color:#0cf;">Nave perfectamente orientada al frente</p>
             
@@ -224,7 +224,7 @@
             }
             if (debugJoystick) {
                 debugJoystick.innerHTML = `
-                    🕹️ Joystick IZQ: X: ${leftStickX.toFixed(2)} | Y: ${leftStickY.toFixed(2)}<br>
+                    静态 🕹️ Joystick IZQ: X: ${leftStickX.toFixed(2)} | Y: ${leftStickY.toFixed(2)}<br>
                     💨 Hiperespacio Z-Speed: ${velocityZ.toFixed(1)}<br>
                     🎯 Rotación Nave: X=${player.rotation.x.toFixed(2)} Z=${player.rotation.z.toFixed(2)}<br>
                     ${renderer.xr.isPresenting ? '🔵 MODO VIRTUAL ENGINE' : '⚪ MODO PC'}
@@ -282,7 +282,7 @@
                 new THREE.ConeGeometry(25, 60, 24), 
                 new THREE.MeshStandardMaterial({ color: 0x3377ff, metalness: 0.9, roughness: 0.2, emissive: 0x001133 })
             );
-            body.rotation.x = Math.PI / 2; // PUNTA DEL CONO HACIA -Z
+            body.rotation.x = Math.PI / 2; 
             shipGroup.add(body);
             
             // Cabina (al frente)
@@ -315,11 +315,6 @@
             rightEngine.rotation.x = Math.PI / 2;
             shipGroup.add(rightEngine);
             
-            const centerEngine = new THREE.Mesh(new THREE.CylinderGeometry(11, 13, 26, 12), engineMat);
-            centerEngine.position.set(0, -2, -38);
-            centerEngine.rotation.x = Math.PI / 2;
-            shipGroup.add(centerEngine);
-            
             return shipGroup;
         }
         
@@ -331,15 +326,9 @@
             while(player.children.length) player.remove(player.children[0]);
             fbx.traverse(c => { if(c.isMesh) c.castShadow = true; });
             fbx.scale.set(0.0007, 0.0007, 0.0007);
-            
-            // ROTACIÓN CORREGIDA: Asegurar que el frente del modelo apunte hacia -Z
-            // La mayoría de modelos FBX tienen el frente hacia +Z o -Z según exportación
-            // Ajustamos para que mire hacia -Z (frente de la cámara)
-            fbx.rotation.set(0, Math.PI, 0); // Girar 180° en Y si el modelo mira hacia +Z
-            
+            fbx.rotation.set(0, Math.PI, 0); 
             player.add(fbx);
             modelLoaded = true;
-            console.log("✅ Modelo FBX enderezado: rotation (0, PI, 0)");
         }, undefined, () => {
             if (!modelLoaded) {
                 console.log("⚠️ Usando nave procedural enderezada");
@@ -353,9 +342,7 @@
             }
         }, 2000);
         
-        // Posición inicial: centrada y ligeramente adelante para visibilidad
         player.position.set(0, -8, -40);
-        // Rotación inicial: completamente enderezada
         player.rotation.set(0, 0, 0);
 
         // 6. ANIMACIÓN DE EXPLOSIONES
@@ -555,7 +542,7 @@
             
             userGroup.position.set(0, 0, 0);
             player.position.set(0, -8, -40);
-            player.rotation.set(0, 0, 0); // ROTACIÓN INICIAL ENDEREZADA
+            player.rotation.set(0, 0, 0); 
             startSpawners();
         }
         
@@ -570,6 +557,7 @@
             gameActive = true; bgMusic.play().catch(() => {}); startSpawners();
         });
         
+        // CORRECCIÓN SISTÉMICA DE TECLADO:
         const keys = {};
         window.addEventListener('keydown', (e) => {
             keys[e.code] = true;
@@ -612,17 +600,15 @@
             
             userGroup.position.z -= (velocityZ * 0.16 + 10);
             
-            // BALANCEO NATURAL (inclinación lateral y cabeceo)
+            // BALANCEO NATURAL
             floatOffset += 0.03;
             const targetRoll = -velocityX * 0.035;
             const targetPitch = velocityY * 0.018;
             
             player.rotation.z = THREE.MathUtils.lerp(player.rotation.z, targetRoll, 0.12);
             player.rotation.x = THREE.MathUtils.lerp(player.rotation.x, targetPitch, 0.12);
-            // Mantener rotation.y en 0 para que la nave no gire horizontalmente
             player.rotation.y = 0;
             
-            // Ligera flotación
             player.position.y += Math.sin(floatOffset * 1.1) * 0.15;
             
             shipLight.position.copy(player.position);
@@ -698,14 +684,13 @@
             dustParticles.rotation.y += 0.0004; stars.rotation.y += 0.0001;
         }
         
+        // Loop WebXR
         renderer.setAnimationLoop(() => { updateGame(); renderer.render(scene, camera); });
         
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
-        
-        console.log("✅ Space Hunter VR - Nave completamente enderezada para VR");
     </script>
 </body>
 </html>
