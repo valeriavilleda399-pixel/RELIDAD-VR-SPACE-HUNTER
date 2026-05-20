@@ -98,16 +98,16 @@
 
     <div id="start-screen">
         <div class="start-card">
-            <div class="vr-badge">🥽 META QUEST 3 · PERSPECTIVA ALTA VR 🥽</div>
+            <div class="vr-badge">🥽 META QUEST 3 · PUNTERO DE SÉGREGACIÓN VR 🥽</div>
             <h1 class="game-title">SPACE HUNTER VR</h1>
-            <p style="color:#0cf;">Físicas balísticas e inerciales fluidas</p>
+            <p style="color:#0cf;">Frente Fijo · Disparos Alineados · Puntero Reactivo</p>
             
             <div class="controls-vr">
                 <h3>🎮 CALIBRACIÓN DE MANDOS</h3>
-                <p><span class="vr-icon">🕹️ JOYSTICK IZQ</span> → Traslación inercial completa (Ejes X / Y)</p>
-                <p><span class="vr-icon">🕹️ JOYSTICK DER</span> → Giro de orientación 360° (X) + Velocidad Z (Y)</p>
-                <p><span class="vr-icon">🔫 GATILLO</span> → Disparo balístico dinámico con inercia de ala</p>
-                <p><span class="vr-icon">🥽 PERSPECTIVA</span> → Vista cenital / Seguimiento elevado por encima del chasis</p>
+                <p><span class="vr-icon">🕹️ JOYSTICK IZQ</span> → Desplazamiento e inclinación integral (X / Y)</p>
+                <p><span class="vr-icon">🕹️ JOYSTICK DER</span> → Arriba: Propulsión de avance continuo (Eje Z)</p>
+                <p><span class="vr-icon">🔫 GATILLO</span> → Disparar láser al frente / Reiniciar en menú</p>
+                <p><span class="vr-icon">🎯 RETÍCULA</span> → Puntero holográfico (Cambia a ROJO al apuntar enemigos)</p>
             </div>
             
             <button class="start-btn" id="start-btn">🚀 INICIAR MISIÓN VR 🚀</button>
@@ -117,12 +117,12 @@
 
     <div id="game-ui">
         <div id="hud-top">💥 <span id="score-val">0</span> | 🛡️ <span id="hp-val">3</span>/3</div>
-        <div id="warning">💎 ¡SISTEMA INERCIADO ACTIVADO! 💎</div>
+        <div id="warning">💎 ¡SISTEMA SINCRO-MATRIZ ACOPLADO! 💎</div>
         <div id="vibration-indicator">📳 ¡IMPACTO! 📳</div>
         
         <div id="ui-bottom">
-            <div>🛸 ENFOQUE SUPERIOR VR | Disparos balísticos orgánicos fluidos</div>
-            <div>⌨️ PC: WASD + Q/E girar + ESPACIO disparar / R reiniciar</div>
+            <div>🛸 ENFOQUE FIJO VR | Disparos directos al frente + Puntero Inteligente</div>
+            <div>⌨️ PC: WASD para esquivar + ESPACIO para disparar</div>
         </div>
     </div>
 
@@ -145,7 +145,7 @@
         document.body.appendChild(renderer.domElement);
         document.body.appendChild(VRButton.createButton(renderer));
         
-        // ---------- GRUPO COMPACTO (TÚ Y TU NAVE SE TRASLADAN JUNTOS) ----------
+        // ---------- GRUPO COMPACTO USERGROUP ----------
         const userGroup = new THREE.Group();  
         scene.add(userGroup);
         userGroup.add(camera);
@@ -157,7 +157,7 @@
         
         // ---------- VARIABLES DE GAMEPAD ----------
         let leftStickX = 0, leftStickY = 0;
-        let rightStickX = 0, rightStickY = 0;
+        let rightStickY = 0;
         let leftGamepad = null, rightGamepad = null;
         
         controllerLeft.addEventListener('connected', (e) => { if (e.data?.gamepad) leftGamepad = e.data.gamepad; });
@@ -172,7 +172,6 @@
                         leftStickX = source.gamepad.axes[0] || 0;
                         leftStickY = source.gamepad.axes[1] || 0;
                     } else if (source.handedness === 'right') {
-                        rightStickX = source.gamepad.axes[2] || 0;
                         rightStickY = source.gamepad.axes[3] || 0;
                     }
                 }
@@ -181,11 +180,6 @@
         
         // ---------- VIBRACIÓN HÁPTICA DIRECTA ----------
         function vibrateControllers(intensity = 1.0, duration = 450) {
-            const vibIndicator = document.getElementById('vibration-indicator');
-            if (vibIndicator) {
-                vibIndicator.style.display = 'block';
-                setTimeout(() => { if (vibIndicator) vibIndicator.style.display = 'none'; }, duration);
-            }
             if (leftGamepad?.hapticActuators?.[0]) {
                 leftGamepad.hapticActuators[0].playEffect('dual-rumble', {
                     startDelay: 0, duration: duration, strongMagnitude: intensity, weakMagnitude: intensity * 0.7
@@ -245,14 +239,24 @@
         }
         player.add(buildShipModel());
         
-        // Ubicada fija abajo frente al userGroup
-        player.position.set(0, -16, -45);
+        player.position.set(0, -14, -45);
         player.rotation.set(0, 0, 0);
         
-        // 👁️ ¡VISTA ELEVADA DESDE ARRIBA DE LA NAVE APUNTANDO HACIA ABAJO!
-        // Subimos en Y (32) y nos alejamos en Z (80) para dar la toma cenital perfecta
+        // Vista cenital elevada fija por detrás de la nave
         camera.position.set(0, 32, 80); 
         camera.lookAt(player.position.x, player.position.y + 6, player.position.z);
+
+        // ============================================================
+        // 🎯 PUNTERO INTELIGENTE (RETÍCULA HOLOGRÁFICA REACTIVA 3D)
+        // ============================================================
+        const crosshairGeo = new THREE.RingGeometry(2.5, 3.2, 16);
+        const crosshairMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+        const crosshair = new THREE.Mesh(crosshairGeo, crosshairMat);
+        // Posicionado flotando adelante en la línea de fuego de la nave
+        crosshair.position.set(0, 0, -180);
+        userGroup.add(crosshair);
+
+        const raycaster = new THREE.Raycaster();
 
         // ============================================================
         // MENÚ DE REINICIO 3D HOLOGRÁFICO FLOTANTE ELEVADO
@@ -283,7 +287,6 @@
             const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
             vrMenuPlane = new THREE.Mesh(new THREE.PlaneGeometry(100, 50), mat);
             
-            // Colocado flotando por encima del horizonte de colisión
             vrMenuPlane.position.set(0, 45, -40);
             userGroup.add(vrMenuPlane);
             vrMenuPlane.visible = false;
@@ -294,7 +297,7 @@
         let score = 0, hp = 3, difficulty = 1;
         let isPaused = false, gameActive = false;
         let velocityX = 0, velocityY = 0, velocityZ = 0;
-        let shipYaw = 0, floatOffset = 0;
+        let floatOffset = 0;
         const FRICTION = 0.94, FLOTATION_ACCEL = 3.0;
         
         const scoreElem = document.getElementById('score-val');
@@ -358,7 +361,7 @@
             animateExplosion();
         }
         
-        // ---------- DISPAROS ORGÁNICOS CON PROPAGACIÓN DE VELOCIDAD ----------
+        // ---------- DISPAROS ACOPLADOS RECTOS HACIA ADELANTE ----------
         function fireBullet() {
             playSound(laserSound);
             const bullet = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 115, 12), new THREE.MeshStandardMaterial({ color: 0x44ffff, emissive: 0x00bbff }));
@@ -367,29 +370,23 @@
             const worldPos = new THREE.Vector3(); player.getWorldPosition(worldPos);
             bullet.position.copy(worldPos);
             
-            // Dirección base hacia adelante
-            const baseDir = new THREE.Vector3(0, 0, -1).applyQuaternion(userGroup.quaternion);
+            // FRENTE FIJO: El tiro sale estrictamente proyectado hacia adelante en -Z
+            const straightDir = new THREE.Vector3(0, 0, -1).normalize();
             
-            // INTEGRACIÓN ORGÁNICA: Sumamos de forma sutil la inercia del movimiento horizontal y vertical para que el tiro no sea rígido
-            baseDir.x += (velocityX * 0.0035);
-            baseDir.y += (velocityY * 0.0035);
-            
-            // Pequeña dispersión aleatoria realista balística
-            baseDir.x += (Math.random() - 0.5) * 0.015;
-            baseDir.y += (Math.random() - 0.5) * 0.015;
-            baseDir.normalize();
-            
-            bullet.userData = { direction: baseDir, speed: 410 };
+            bullet.userData = { direction: straightDir, speed: 430 };
             scene.add(bullet); playerBullets.push(bullet);
         }
         
         function enemyShoot(enemyMesh) {
             playSound(enemyLaserSound);
-            const eLaser = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 80, 8), new THREE.MeshStandardMaterial({ color: 0xff4422, emissive: 0xcc2200 }));
+            const eLaser = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 80, 8), new THREE.MeshStandardMaterial({ color: 0xff4422, emissive: 0xff1100 }));
             eLaser.rotation.x = Math.PI / 2; eLaser.position.copy(enemyMesh.position);
-            const targetPos = new THREE.Vector3(); player.getWorldPosition(targetPos);
-            const dir = new THREE.Vector3().subVectors(targetPos, enemyMesh.position).normalize();
-            eLaser.userData = { direction: dir, speed: 180 };
+            
+            // TELEDIRIGIDO AL BLANCO: El caza lee la posición global exacta de tu nave para atacarte directo
+            const playerWorldPos = new THREE.Vector3(); player.getWorldPosition(playerWorldPos);
+            const dir = new THREE.Vector3().subVectors(playerWorldPos, enemyMesh.position).normalize();
+            
+            eLaser.userData = { direction: dir, speed: 185 };
             scene.add(eLaser); enemyBullets.push(eLaser);
         }
         
@@ -409,7 +406,7 @@
         
         function resetGame() {
             hp = 3; score = 0; difficulty = 1; gameActive = true; isPaused = false;
-            velocityX = velocityY = velocityZ = 0; shipYaw = 0;
+            velocityX = velocityY = velocityZ = 0;
             hpElem.innerText = hp; scoreElem.innerText = score;
             if (vrMenuPlane) vrMenuPlane.visible = false;
             bgMusic.currentTime = 0; bgMusic.play().catch(() => {});
@@ -420,7 +417,7 @@
             enemyBullets.forEach(b => scene.remove(b)); enemyBullets = [];
             
             userGroup.position.set(0, 0, 0); userGroup.rotation.set(0, 0, 0);
-            player.position.set(0, -16, -45); player.rotation.set(0, 0, 0);
+            player.position.set(0, -14, -45); player.rotation.set(0, 0, 0);
         }
         
         function handleTriggerPress() {
@@ -460,23 +457,20 @@
             
             updateVRInputs();
             let accelX = 0, accelY = 0, targetZ = 0;
-            let turnSpeed = 0;
             
             // ============================================================
-            // JOYSTICK IZQUIERDO COMPLETO COORDENADO (MOVIMIENTO X / Y INTEGRAL)
+            // CONFIGURACIÓN DE MANDOS INTEGRADA (GIROS REMOVIDOS)
             // ============================================================
             if (renderer.xr.isPresenting) {
-                // Joystick Izquierdo maneja fluidamente el esquive lateral (X) y altitud vertical (Y)
+                // Joystick Izquierdo: Traslación libre inercial lateral (X) e inclinación/altitud vertical (Y)
                 if (Math.abs(leftStickX) > 0.12) accelX = leftStickX * FLOTATION_ACCEL;
-                if (Math.abs(leftStickY) > 0.12) accelY = -leftStickY * FLOTATION_ACCEL; // Si lo dejas abajo, desciende de forma fija
+                if (Math.abs(leftStickY) > 0.12) accelY = -leftStickY * FLOTATION_ACCEL; 
                 
-                // Joystick Derecho maneja rotación Y horizontal e impulso frontal
-                if (Math.abs(rightStickX) > 0.12) turnSpeed = rightStickX * 2.5;
+                // Joystick Derecho: Hacia Arriba acelera continuamente el avance en Z (No hay giros en X)
                 if (rightStickY < -0.12) targetZ = Math.abs(rightStickY) * 200; 
             } else {
                 if (keys['KeyA']) accelX = -FLOTATION_ACCEL; if (keys['KeyD']) accelX = FLOTATION_ACCEL;
                 if (keys['KeyW']) accelY = FLOTATION_ACCEL; if (keys['KeyS']) accelY = -FLOTATION_ACCEL;
-                if (keys['KeyQ']) turnSpeed = -2.5; if (keys['KeyE']) turnSpeed = 2.5;
                 if (keys['ShiftLeft']) targetZ = 120;
             }
             
@@ -484,33 +478,48 @@
             velocityY += accelY; velocityY *= FRICTION;
             velocityZ = THREE.MathUtils.lerp(velocityZ, targetZ, 0.075);
             
-            // Giro horizontal 360° total
-            shipYaw += turnSpeed * 0.018;
-            userGroup.rotation.y = shipYaw;
+            // TRASLACIÓN CONJUNTA DIRECTA AL FRENTE (Sin rotaciones de 360 grados)
+            userGroup.position.x += velocityX;
+            userGroup.position.y += velocityY;
+            userGroup.position.z -= (velocityZ * 0.15 + 6); 
             
-            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(userGroup.quaternion);
-            const rightVec = new THREE.Vector3(1, 0, 0).applyQuaternion(userGroup.quaternion);
-            
-            // TRASLACIÓN CONJUNTA INTEGRAL SÍNCRONA DE TODO EL MÓDULO USERGROUP (Tú eres la nave)
-            userGroup.position.x += rightVec.x * velocityX * 0.15 + forward.x * velocityZ;
-            userGroup.position.z += rightVec.z * velocityX * 0.15 + forward.z * velocityZ;
-            userGroup.position.y += velocityY * 0.15;
-            userGroup.position.z -= 6; 
-            
-            // Límites absolutos del cuadrante universal
+            // Límites de pantalla del cuadrante espacial
             userGroup.position.x = Math.min(8500, Math.max(-8500, userGroup.position.x));
-            userGroup.position.y = Math.min(4800, Math.max(-2800, userGroup.position.y));
+            userGroup.position.y = Math.min(4500, Math.max(-2500, userGroup.position.y));
             
-            // Balanceo estético local inercial en los alerones corporales
+            // Balanceo estético local inercial de las alas de tu caza
             floatOffset += 0.025;
             player.rotation.z = THREE.MathUtils.lerp(player.rotation.z, -velocityX * 0.045, 0.12);
             player.rotation.x = THREE.MathUtils.lerp(player.rotation.x, velocityY * 0.025, 0.12);
-            player.position.y = -16 + Math.sin(floatOffset) * 0.18; 
+            player.position.y = -14 + Math.sin(floatOffset) * 0.18; 
             
             shipLight.position.copy(userGroup.position);
             
             const playerWorldPos = new THREE.Vector3(); player.getWorldPosition(playerWorldPos);
             
+            // ============================================================
+            // OPERACIÓN DEL RAYCASTER PARA EL PUNTERO REACTIVO ENEMY
+            // ============================================================
+            // El rayo sale desde tu posición de cabina y apunta directo al frente (-Z)
+            const rayOrigin = new THREE.Vector3(); camera.getWorldPosition(rayOrigin);
+            const rayDirection = new THREE.Vector3(0, 0, -1).applyQuaternion(userGroup.quaternion).normalize();
+            raycaster.set(rayOrigin, rayDirection);
+            
+            // Extraer las mallas de los enemigos activos para evaluar la intersección
+            const enemyMeshes = enemies.map(e => e.mesh);
+            const intersects = raycaster.intersectObjects(enemyMeshes, true);
+            
+            if (intersects.length > 0) {
+                // 🎯 ¡FUEGO EN LA MIRA!: Cambia a rojo brillante al apuntar a un enemigo
+                crosshair.material.color.setHex(0xff0033);
+                crosshair.scale.setScalar(1.2); // Se expande un poco como confirmación visual
+            } else {
+                // Retícula neutral cian en reposo
+                crosshair.material.color.setHex(0x00ffff);
+                crosshair.scale.setScalar(1.0);
+            }
+            
+            // Reloj de Spawns
             spawnTimer++; enemyTimer++;
             if (spawnTimer >= Math.max(11, 27 - difficulty)) {
                 spawnTimer = 0;
