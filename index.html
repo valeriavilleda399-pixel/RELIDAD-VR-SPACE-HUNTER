@@ -98,16 +98,16 @@
 
     <div id="start-screen">
         <div class="start-card">
-            <div class="vr-badge">🥽 META QUEST 3 · PUNTERO DE SÉGREGACIÓN VR 🥽</div>
+            <div class="vr-badge">🥽 META QUEST 3 · TRASLACIÓN REPARADA VR 🥽</div>
             <h1 class="game-title">SPACE HUNTER VR</h1>
-            <p style="color:#0cf;">Frente Fijo · Disparos Alineados · Puntero Reactivo</p>
+            <p style="color:#0cf;">Físicas de Esquive y Flotación Corregidas</p>
             
             <div class="controls-vr">
                 <h3>🎮 CALIBRACIÓN DE MANDOS</h3>
-                <p><span class="vr-icon">🕹️ JOYSTICK IZQ</span> → Desplazamiento e inclinación integral (X / Y)</p>
-                <p><span class="vr-icon">🕹️ JOYSTICK DER</span> → Arriba: Propulsión de avance continuo (Eje Z)</p>
-                <p><span class="vr-icon">🔫 GATILLO</span> → Disparar láser al frente / Reiniciar en menú</p>
-                <p><span class="vr-icon">🎯 RETÍCULA</span> → Puntero holográfico (Cambia a ROJO al apuntar enemigos)</p>
+                <p><span class="vr-icon">🕹️ JOYSTICK IZQ</span> → Esquivar Lateral (X) y Altura (Y) de forma fluida</p>
+                <p><span class="vr-icon">🕹️ JOYSTICK DER</span> → Arriba: Propulsión de avance hiperespacial (Z)</p>
+                <p><span class="vr-icon">🔫 GATILLO</span> → Abrir fuego frontal / Confirmar Reinicio en Menú VR</p>
+                <p><span class="vr-icon">🎯 PUNTERO</span> → Retícula reactiva 3D (Cambia a ROJO al fijar objetivos)</p>
             </div>
             
             <button class="start-btn" id="start-btn">🚀 INICIAR MISIÓN VR 🚀</button>
@@ -117,12 +117,12 @@
 
     <div id="game-ui">
         <div id="hud-top">💥 <span id="score-val">0</span> | 🛡️ <span id="hp-val">3</span>/3</div>
-        <div id="warning">💎 ¡SISTEMA SINCRO-MATRIZ ACOPLADO! 💎</div>
+        <div id="warning">💎 ¡SISTEMA INERCIADO COMPLETO ACTIVO! 💎</div>
         <div id="vibration-indicator">📳 ¡IMPACTO! 📳</div>
         
         <div id="ui-bottom">
-            <div>🛸 ENFOQUE FIJO VR | Disparos directos al frente + Puntero Inteligente</div>
-            <div>⌨️ PC: WASD para esquivar + ESPACIO para disparar</div>
+            <div>🛸 CABINA VR INTEGRAL | Enemigos barren en Y · Esquivas en Eje X</div>
+            <div>⌨️ PC: WASD para maniobrar + ESPACIO para abrir fuego</div>
         </div>
     </div>
 
@@ -145,7 +145,7 @@
         document.body.appendChild(renderer.domElement);
         document.body.appendChild(VRButton.createButton(renderer));
         
-        // ---------- GRUPO COMPACTO USERGROUP ----------
+        // ---------- GRUPO COMPACTO USERGROUP (TÚ ERES LA NAVE) ----------
         const userGroup = new THREE.Group();  
         scene.add(userGroup);
         userGroup.add(camera);
@@ -161,7 +161,11 @@
         let leftGamepad = null, rightGamepad = null;
         
         controllerLeft.addEventListener('connected', (e) => { if (e.data?.gamepad) leftGamepad = e.data.gamepad; });
-        controllerRight.addEventListener('connected', (e) => { if (e.data?.gamepad) rightGamepad = e.data.gamepad; });
+        controllerRight.addEventListener('connected', (e) => { 
+            if (e.data?.gamepad) rightGamepad = e.data.gamepad; 
+            document.getElementById('vr-status').innerHTML = '✅ Mandos VR Listos';
+            document.getElementById('vr-status').style.color = '#0f0';
+        });
         
         function updateVRInputs() {
             const session = renderer.xr.getSession();
@@ -218,7 +222,7 @@
         const starField = new THREE.Points(starsGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 1.4, transparent: true }));
         scene.add(starField);
         
-        // ---------- EL CHASIS DE TU NAVE ----------
+        // ---------- CABINA EN PRIMERA PERSONA ----------
         const player = new THREE.Group();
         userGroup.add(player); 
         
@@ -229,38 +233,32 @@
             const body = new THREE.Mesh(bodyGeo, bodyMat);
             body.rotation.x = Math.PI / 2; group.add(body);
             
-            const cockpit = new THREE.Mesh(new THREE.SphereGeometry(12, 24, 24), new THREE.MeshStandardMaterial({ color: 0xaaddff, emissive: 0x2277aa, transparent: true, opacity: 0.5 }));
+            const cockpit = new THREE.Mesh(new THREE.SphereGeometry(12, 24, 24), new THREE.MeshStandardMaterial({ color: 0xaaddff, emissive: 0x2277aa, transparent: true, opacity: 0.3 }));
             cockpit.position.set(0, 5, 12); group.add(cockpit);
             
             const wingMat = new THREE.MeshStandardMaterial({ color: 0x2266cc, metalness: 0.85 });
-            const leftWing = new THREE.Mesh(new THREE.BoxGeometry(46, 5, 22), wingMat); leftWing.position.set(-38, 2, -10); group.add(leftWing);
-            const rightWing = new THREE.Mesh(new THREE.BoxGeometry(46, 5, 22), wingMat); rightWing.position.set(38, 2, -10); group.add(rightWing);
+            const leftWing = new THREE.Mesh(new THREE.BoxGeometry(46, 5, 22), wingMat); leftWing.position.set(-42, -2, -15); group.add(leftWing);
+            const rightWing = new THREE.Mesh(new THREE.BoxGeometry(46, 5, 22), wingMat); rightWing.position.set(42, -2, -15); group.add(rightWing);
             return group;
         }
         player.add(buildShipModel());
         
-        player.position.set(0, -14, -45);
+        // Vista de cabina síncrona
+        player.position.set(0, -10, -15);
         player.rotation.set(0, 0, 0);
-        
-        // Vista cenital elevada fija por detrás de la nave
-        camera.position.set(0, 32, 80); 
-        camera.lookAt(player.position.x, player.position.y + 6, player.position.z);
+        camera.position.set(0, 0, 0); 
+        camera.lookAt(0, 0, -100);
 
-        // ============================================================
-        // 🎯 PUNTERO INTELIGENTE (RETÍCULA HOLOGRÁFICA REACTIVA 3D)
-        // ============================================================
-        const crosshairGeo = new THREE.RingGeometry(2.5, 3.2, 16);
-        const crosshairMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, transparent: true, opacity: 0.8 });
+        // ---------- RETÍCULA REACTIVA ESPACIAL ----------
+        const crosshairGeo = new THREE.RingGeometry(1.8, 2.4, 16);
+        const crosshairMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
         const crosshair = new THREE.Mesh(crosshairGeo, crosshairMat);
-        // Posicionado flotando adelante en la línea de fuego de la nave
-        crosshair.position.set(0, 0, -180);
+        crosshair.position.set(0, 0, -120); 
         userGroup.add(crosshair);
 
         const raycaster = new THREE.Raycaster();
 
-        // ============================================================
-        // MENÚ DE REINICIO 3D HOLOGRÁFICO FLOTANTE ELEVADO
-        // ============================================================
+        // ---------- MENÚ DE REINICIO 3D VR ----------
         let vrMenuPlane = null;
         
         function createVRMenu() {
@@ -285,9 +283,9 @@
             
             const texture = new THREE.CanvasTexture(canvas);
             const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
-            vrMenuPlane = new THREE.Mesh(new THREE.PlaneGeometry(100, 50), mat);
+            vrMenuPlane = new THREE.Mesh(new THREE.PlaneGeometry(60, 30), mat);
             
-            vrMenuPlane.position.set(0, 45, -40);
+            vrMenuPlane.position.set(0, 0, -50);
             userGroup.add(vrMenuPlane);
             vrMenuPlane.visible = false;
         }
@@ -361,7 +359,6 @@
             animateExplosion();
         }
         
-        // ---------- DISPAROS ACOPLADOS RECTOS HACIA ADELANTE ----------
         function fireBullet() {
             playSound(laserSound);
             const bullet = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 115, 12), new THREE.MeshStandardMaterial({ color: 0x44ffff, emissive: 0x00bbff }));
@@ -370,10 +367,9 @@
             const worldPos = new THREE.Vector3(); player.getWorldPosition(worldPos);
             bullet.position.copy(worldPos);
             
-            // FRENTE FIJO: El tiro sale estrictamente proyectado hacia adelante en -Z
             const straightDir = new THREE.Vector3(0, 0, -1).normalize();
             
-            bullet.userData = { direction: straightDir, speed: 430 };
+            bullet.userData = { direction: straightDir, speed: 450 };
             scene.add(bullet); playerBullets.push(bullet);
         }
         
@@ -382,11 +378,14 @@
             const eLaser = new THREE.Mesh(new THREE.CylinderGeometry(4.5, 4.5, 80, 8), new THREE.MeshStandardMaterial({ color: 0xff4422, emissive: 0xff1100 }));
             eLaser.rotation.x = Math.PI / 2; eLaser.position.copy(enemyMesh.position);
             
-            // TELEDIRIGIDO AL BLANCO: El caza lee la posición global exacta de tu nave para atacarte directo
             const playerWorldPos = new THREE.Vector3(); player.getWorldPosition(playerWorldPos);
-            const dir = new THREE.Vector3().subVectors(playerWorldPos, enemyMesh.position).normalize();
+            const dir = new THREE.Vector3().subVectors(playerWorldPos, enemyMesh.position);
             
-            eLaser.userData = { direction: dir, speed: 185 };
+            // Los enemigos barren en el eje Y vertical
+            dir.y += (Math.random() - 0.5) * 45; 
+            dir.normalize();
+            
+            eLaser.userData = { direction: dir, speed: 190 };
             scene.add(eLaser); enemyBullets.push(eLaser);
         }
         
@@ -417,7 +416,7 @@
             enemyBullets.forEach(b => scene.remove(b)); enemyBullets = [];
             
             userGroup.position.set(0, 0, 0); userGroup.rotation.set(0, 0, 0);
-            player.position.set(0, -14, -45); player.rotation.set(0, 0, 0);
+            player.position.set(0, -10, -15); player.rotation.set(0, 0, 0);
         }
         
         function handleTriggerPress() {
@@ -449,7 +448,7 @@
         
         createVRMenu(); 
 
-        // ---------- LOOP PRINCIPAL ----------
+        // ---------- LOOP PRINCIPAL CORREGIDO ----------
         let spawnTimer = 0, enemyTimer = 0;
         
         function updateGame() {
@@ -458,63 +457,55 @@
             updateVRInputs();
             let accelX = 0, accelY = 0, targetZ = 0;
             
-            // ============================================================
-            // CONFIGURACIÓN DE MANDOS INTEGRADA (GIROS REMOVIDOS)
-            // ============================================================
             if (renderer.xr.isPresenting) {
-                // Joystick Izquierdo: Traslación libre inercial lateral (X) e inclinación/altitud vertical (Y)
+                // Joystick Izquierdo: Mapeado íntegro para esquive en X (Lateral) e Y (Altura) sin interferencias
                 if (Math.abs(leftStickX) > 0.12) accelX = leftStickX * FLOTATION_ACCEL;
                 if (Math.abs(leftStickY) > 0.12) accelY = -leftStickY * FLOTATION_ACCEL; 
                 
-                // Joystick Derecho: Hacia Arriba acelera continuamente el avance en Z (No hay giros en X)
-                if (rightStickY < -0.12) targetZ = Math.abs(rightStickY) * 200; 
+                // Joystick Derecho (Hacia Arriba): Control de la velocidad de crucero frontal (Z)
+                if (rightStickY < -0.12) targetZ = Math.abs(rightStickY) * 210; 
             } else {
                 if (keys['KeyA']) accelX = -FLOTATION_ACCEL; if (keys['KeyD']) accelX = FLOTATION_ACCEL;
                 if (keys['KeyW']) accelY = FLOTATION_ACCEL; if (keys['KeyS']) accelY = -FLOTATION_ACCEL;
-                if (keys['ShiftLeft']) targetZ = 120;
+                if (keys['ShiftLeft']) targetZ = 130;
             }
             
+            // ¡SINCRO DE FRICCIÓN REPARADA!: Cada eje opera sobre su propia fricción e inercia independiente
             velocityX += accelX; velocityX *= FRICTION; 
             velocityY += accelY; velocityY *= FRICTION;
             velocityZ = THREE.MathUtils.lerp(velocityZ, targetZ, 0.075);
             
-            // TRASLACIÓN CONJUNTA DIRECTA AL FRENTE (Sin rotaciones de 360 grados)
+            // TRASLACIÓN CONJUNTA INTEGRAL (La cabina entera y tus ojos se mueven por el mapa)
             userGroup.position.x += velocityX;
             userGroup.position.y += velocityY;
             userGroup.position.z -= (velocityZ * 0.15 + 6); 
             
-            // Límites de pantalla del cuadrante espacial
+            // Límites del cuadrante
             userGroup.position.x = Math.min(8500, Math.max(-8500, userGroup.position.x));
             userGroup.position.y = Math.min(4500, Math.max(-2500, userGroup.position.y));
             
-            // Balanceo estético local inercial de las alas de tu caza
+            // Alabeo estético local inercial de las alas de tu nave
             floatOffset += 0.025;
             player.rotation.z = THREE.MathUtils.lerp(player.rotation.z, -velocityX * 0.045, 0.12);
             player.rotation.x = THREE.MathUtils.lerp(player.rotation.x, velocityY * 0.025, 0.12);
-            player.position.y = -14 + Math.sin(floatOffset) * 0.18; 
+            player.position.y = -10 + Math.sin(floatOffset) * 0.12; 
             
             shipLight.position.copy(userGroup.position);
             
             const playerWorldPos = new THREE.Vector3(); player.getWorldPosition(playerWorldPos);
             
-            // ============================================================
-            // OPERACIÓN DEL RAYCASTER PARA EL PUNTERO REACTIVO ENEMY
-            // ============================================================
-            // El rayo sale desde tu posición de cabina y apunta directo al frente (-Z)
+            // Raycaster óptico desde el visor
             const rayOrigin = new THREE.Vector3(); camera.getWorldPosition(rayOrigin);
             const rayDirection = new THREE.Vector3(0, 0, -1).applyQuaternion(userGroup.quaternion).normalize();
             raycaster.set(rayOrigin, rayDirection);
             
-            // Extraer las mallas de los enemigos activos para evaluar la intersección
             const enemyMeshes = enemies.map(e => e.mesh);
             const intersects = raycaster.intersectObjects(enemyMeshes, true);
             
             if (intersects.length > 0) {
-                // 🎯 ¡FUEGO EN LA MIRA!: Cambia a rojo brillante al apuntar a un enemigo
                 crosshair.material.color.setHex(0xff0033);
-                crosshair.scale.setScalar(1.2); // Se expande un poco como confirmación visual
+                crosshair.scale.setScalar(1.25);
             } else {
-                // Retícula neutral cian en reposo
                 crosshair.material.color.setHex(0x00ffff);
                 crosshair.scale.setScalar(1.0);
             }
