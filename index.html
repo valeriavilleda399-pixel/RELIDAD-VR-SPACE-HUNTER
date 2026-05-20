@@ -72,17 +72,19 @@
             font-family: 'Orbitron', monospace; font-size: 11px; font-weight: bold; cursor: pointer; z-index: 200;
         }
         #pause-btn:hover { background: #0cf; color: #000; }
+        #vr-status { position: absolute; top: 55px; right: 15px; background: rgba(0,0,0,0.7); padding: 4px 12px; border-radius: 15px; font-size: 9px; color: #0f0; z-index: 101; }
         
         @media (max-width: 768px) {
             .game-title { font-size: 1.5rem; }
             #hud-top { font-size: 14px; }
         }
+        button { font-family: inherit; }
     </style>
     <script type="importmap">
         {
             "imports": {
                 "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/". "https://unpkg.com/three@0.160.0/examples/jsm/"
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
             }
         }
     </script>
@@ -236,8 +238,7 @@
         player.position.set(0, -12, -45);
         player.rotation.set(0, 0, 0);
         
-        // 👁️ ¡VISTA EN TERCERA PERSONA EN CAJÓN VR CORREGIDA! 
-        // Desfasamos tus ojos un poco hacia arriba y atrás respecto al chasis para ver la nave enfrente tuyo.
+        // Posicionamiento de cámara en tercera persona relativa al userGroup
         camera.position.set(0, 18, 55); 
         camera.lookAt(player.position);
 
@@ -251,7 +252,6 @@
             canvas.width = 512; canvas.height = 256;
             const ctx = canvas.getContext('2d');
             
-            // Renderizado del Canvas del Menú 3D
             ctx.fillStyle = 'rgba(10, 10, 42, 0.95)';
             ctx.fillRect(0, 0, 512, 256);
             ctx.strokeStyle = '#ff3333'; ctx.lineWidth = 6;
@@ -271,7 +271,6 @@
             const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
             vrMenuPlane = new THREE.Mesh(new THREE.PlaneGeometry(80, 40), mat);
             
-            // Posicionamiento flotante rígido frente a los lentes del visor
             vrMenuPlane.position.set(0, 5, -80);
             userGroup.add(vrMenuPlane);
             vrMenuPlane.visible = false;
@@ -290,7 +289,7 @@
         
         const rockMat = new THREE.MeshStandardMaterial({ color: 0xaa8866, roughness: 0.7, metalness: 0.1 });
         const texLoader = new THREE.TextureLoader();
-        texLoader.load('assets/textures/metorito.jpg', (texture) => { rockMat.map = texture; rockMat.needsUpdate = true; });
+        texLoader.load('assets/textures/metorito.jpg', (texture) => { rockMat.map = texture; rockMat.needsUpdate = true; }, undefined, () => {});
         
         const rockGeometries = [new THREE.DodecahedronGeometry(28, 0), new THREE.IcosahedronGeometry(30, 0), new THREE.OctahedronGeometry(32)];
         
@@ -308,16 +307,16 @@
         }
         
         function spawnEnemy() {
-            const g = new THREE.Group();
+            const group = new THREE.Group();
             const enemyBody = new THREE.Mesh(new THREE.CylinderGeometry(20, 26, 44, 12), new THREE.MeshStandardMaterial({ color: 0xdd4422, emissive: 0x441100 }));
-            enemyBody.rotation.x = Math.PI / 2; g.add(enemyBody);
+            enemyBody.rotation.x = Math.PI / 2; group.add(enemyBody);
             const worldPos = userGroup.position;
             g.position.set(
                 worldPos.x + (Math.random() - 0.5) * 4800,
                 worldPos.y + (Math.random() - 0.5) * 3200,
                 worldPos.z - 7000 - Math.random() * 4000
             );
-            scene.add(g); enemies.push({ mesh: g, speed: 14 + Math.random() * 12, lastShot: Date.now() });
+            scene.add(group); enemies.push({ mesh: group, speed: 14 + Math.random() * 12, lastShot: Date.now() });
         }
         
         function createExplosion(pos) {
@@ -376,8 +375,6 @@
             if (hp <= 0) {
                 gameActive = false; isPaused = true; bgMusic.pause();
                 vibrateControllers(1.2, 900);
-                
-                // Desplegar menú de reinicio VR en el espacio 3D
                 if (vrMenuPlane) vrMenuPlane.visible = true;
             }
         }
@@ -398,10 +395,9 @@
             player.position.set(0, -12, -45); player.rotation.set(0, 0, 0);
         }
         
-        // ----- CAPTURA DE EVENTOS DE GATILLO (Gatillo = Disparo o Reiniciar si perdiste) -----
         function handleTriggerPress() {
             if (hp <= 0) {
-                resetGame(); // Reinicia el juego si estás en pantalla de Game Over
+                resetGame(); 
             } else if (gameActive && !isPaused) {
                 fireBullet();
             }
@@ -426,7 +422,7 @@
         });
         window.addEventListener('keyup', (e) => keys[e.code] = false);
         
-        createVRMenu(); // Instanciación inicial del plano inmersivo
+        createVRMenu(); 
 
         // ---------- LOOP PRINCIPAL ----------
         let spawnTimer = 0, enemyTimer = 0;
@@ -441,7 +437,7 @@
             if (renderer.xr.isPresenting) {
                 if (Math.abs(leftStickX) > 0.12) accelX = leftStickX * FLOTATION_ACCEL;
                 if (Math.abs(leftStickY) > 0.12) accelY = -leftStickY * FLOTATION_ACCEL;
-                if (Math.abs(rightStickX) > 0.12) turnSpeed = rightStickX * 2.8;
+                if (Math.abs(rightStickX) > 0.12) turnSpeed = rightStickX * 2.5;
                 if (Math.abs(rightStickY) > 0.12) targetZ = rightStickY * 0.7; 
             } else {
                 if (keys['KeyA']) accelX = -FLOTATION_ACCEL; if (keys['KeyD']) accelX = FLOTATION_ACCEL;
@@ -471,7 +467,7 @@
             floatOffset += 0.025;
             player.rotation.z = THREE.MathUtils.lerp(player.rotation.z, -velocityX * 0.045, 0.12);
             player.rotation.x = THREE.MathUtils.lerp(player.rotation.x, velocityY * 0.025, 0.12);
-            player.position.y = -12 + Math.sin(floatOffset) * 0.18; // Balanceo local
+            player.position.y = -12 + Math.sin(floatOffset) * 0.18; 
             
             shipLight.position.copy(userGroup.position);
             
