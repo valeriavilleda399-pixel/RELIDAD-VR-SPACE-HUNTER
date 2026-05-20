@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Space Hunter VR - Red Squadron | Valeria Abigail Villeda Hernández</title>
+    <title>Space Hunter VR - Remap Controles | Valeria Abigail Villeda Hernández</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', 'Courier New', monospace; }
@@ -73,6 +73,11 @@
         }
         #pause-btn:hover { background: #0cf; color: #000; }
         #vr-status { position: absolute; top: 55px; right: 15px; background: rgba(0,0,0,0.7); padding: 4px 12px; border-radius: 15px; font-size: 9px; color: #0f0; z-index: 101; }
+        #vibration-indicator {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            color: #ff3333; font-weight: bold; font-size: 16px; background: rgba(0,0,0,0.7);
+            padding: 6px 20px; border-radius: 20px; display: none; z-index: 105;
+        }
         
         @media (max-width: 768px) {
             .game-title { font-size: 1.5rem; }
@@ -93,16 +98,16 @@
 
     <div id="start-screen">
         <div class="start-card">
-            <div class="vr-badge">🥽 META QUEST 3 · PERSPECTIVA UNIFICADA 🥽</div>
+            <div class="vr-badge">🥽 META QUEST 3 · CONTROLES ASIGNADOS 🥽</div>
             <h1 class="game-title">SPACE HUNTER VR</h1>
-            <p style="color:#0cf;">Tercera persona integrada con Menú Háptico Inmersivo</p>
+            <p style="color:#0cf;">Mapeo Dinámico de Joysticks Corregido</p>
             
             <div class="controls-vr">
-                <h3>🎮 CONTROLES INTEGRALES VR</h3>
-                <p><span class="vr-icon">🕹️ JOYSTICK IZQ</span> → Traslación inercial de la cabina (X / Y)</p>
-                <p><span class="vr-icon">🕹️ JOYSTICK DER</span> → Giro de orientación 360° (X) + Velocidad Z (Y)</p>
-                <p><span class="vr-icon">🔫 GATILLO</span> → Disparar láser / Presionar REINICIAR en Menú VR</p>
-                <p><span class="vr-icon">🥽 PERSPECTIVA</span> → Posición fija en la parte trasera de la nave</p>
+                <h3>🎮 CALIBRACIÓN DE MANDOS</h3>
+                <p><span class="vr-icon">🕹️ JOYSTICK IZQ</span> → Arriba/Abajo: Elevar nave o quedarse abajo</p>
+                <p><span class="vr-icon">🕹️ JOYSTICK DER</span> → Izq/Der: Girar rumbo 360° | Arriba: Acelerar propulsión</p>
+                <p><span class="vr-icon">🔫 GATILLO</span> → Disparar ráfaga láser / Confirmar Reinicio VR</p>
+                <p><span class="vr-icon">🥽 ENFOQUE</span> → Vista cinemática limpia holográfica</p>
             </div>
             
             <button class="start-btn" id="start-btn">🚀 INICIAR MISIÓN VR 🚀</button>
@@ -113,9 +118,10 @@
     <div id="game-ui">
         <div id="hud-top">💥 <span id="score-val">0</span> | 🛡️ <span id="hp-val">3</span>/3</div>
         <div id="warning">💎 ¡SISTEMA SINCRO-MATRIZ ACOPLADO! 💎</div>
+        <div id="vibration-indicator">📳 ¡IMPACTO! 📳</div>
         
         <div id="ui-bottom">
-            <div>🛸 PERSPECTIVA VR | Vista de seguimiento rígida + Menú 3D</div>
+            <div>🛸 PERSPECTIVA VR | Controles asimétricos mapeados fluidos</div>
             <div>⌨️ PC: WASD + Q/E girar + ESPACIO disparar / R reiniciar</div>
         </div>
     </div>
@@ -139,7 +145,7 @@
         document.body.appendChild(renderer.domElement);
         document.body.appendChild(VRButton.createButton(renderer));
         
-        // ---------- GRUPO COMPACTO (TÚ Y TU NAVE SE TRASLADAN JUNTOS) ----------
+        // ---------- GRUPO COMPACTO DE CABINA ----------
         const userGroup = new THREE.Group();  
         scene.add(userGroup);
         userGroup.add(camera);
@@ -175,6 +181,11 @@
         
         // ---------- VIBRACIÓN HÁPTICA DIRECTA ----------
         function vibrateControllers(intensity = 1.0, duration = 450) {
+            const vibIndicator = document.getElementById('vibration-indicator');
+            if (vibIndicator) {
+                vibIndicator.style.display = 'block';
+                setTimeout(() => { if (vibIndicator) vibIndicator.style.display = 'none'; }, duration);
+            }
             if (leftGamepad?.hapticActuators?.[0]) {
                 leftGamepad.hapticActuators[0].playEffect('dual-rumble', {
                     startDelay: 0, duration: duration, strongMagnitude: intensity, weakMagnitude: intensity * 0.7
@@ -225,25 +236,24 @@
             body.rotation.x = Math.PI / 2; group.add(body);
             
             const cockpit = new THREE.Mesh(new THREE.SphereGeometry(12, 24, 24), new THREE.MeshStandardMaterial({ color: 0xaaddff, emissive: 0x2277aa, transparent: true, opacity: 0.5 }));
-            cockpit.position.set(0, 6, 24); group.add(cockpit);
+            cockpit.position.set(0, 5, 12); group.add(cockpit);
             
             const wingMat = new THREE.MeshStandardMaterial({ color: 0x2266cc, metalness: 0.85 });
-            const leftWing = new THREE.Mesh(new THREE.BoxGeometry(46, 5, 22), wingMat); leftWing.position.set(-38, 3, -5); group.add(leftWing);
-            const rightWing = new THREE.Mesh(new THREE.BoxGeometry(46, 5, 22), wingMat); rightWing.position.set(38, 3, -5); group.add(rightWing);
+            const leftWing = new THREE.Mesh(new THREE.BoxGeometry(46, 5, 22), wingMat); leftWing.position.set(-38, 2, -10); group.add(leftWing);
+            const rightWing = new THREE.Mesh(new THREE.BoxGeometry(46, 5, 22), wingMat); rightWing.position.set(38, 2, -10); group.add(rightWing);
             return group;
         }
         player.add(buildShipModel());
         
-        // Ubicada fija enfrente del userGroup
         player.position.set(0, -12, -45);
         player.rotation.set(0, 0, 0);
         
-        // Vista de seguimiento en tercera persona
-        camera.position.set(0, 18, 55); 
+        // Vista fija elevada detrás de la nave
+        camera.position.set(0, 22, 90); 
         camera.lookAt(player.position);
 
         // ============================================================
-        // MENÚ DE REINICIO 3D FLOTANTE (EXCLUSIVO PARA REALIDAD VIRTUAL)
+        // MENÚ DE REINICIO 3D HOLOGRÁFICO FLOTANTE ELEVADO
         // ============================================================
         let vrMenuPlane = null;
         
@@ -252,26 +262,26 @@
             canvas.width = 512; canvas.height = 256;
             const ctx = canvas.getContext('2d');
             
-            ctx.fillStyle = 'rgba(10, 10, 42, 0.95)';
+            ctx.fillStyle = 'rgba(12, 12, 50, 0.95)';
             ctx.fillRect(0, 0, 512, 256);
-            ctx.strokeStyle = '#ff3333'; ctx.lineWidth = 6;
+            ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 6;
             ctx.strokeRect(10, 10, 492, 236);
             
-            ctx.fillStyle = '#ff3333'; ctx.font = 'bold 32px Orbitron, sans-serif'; ctx.textAlign = 'center';
-            ctx.fillText('💀 MISIÓN FALLIDA 💀', 256, 75);
+            ctx.fillStyle = '#ff3333'; ctx.font = 'bold 36px Orbitron, sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText('MISIÓN FALLIDA', 256, 75);
             
             ctx.fillStyle = '#ffffff'; ctx.font = '20px monospace';
             ctx.fillText('Tus escudos han colapsado.', 256, 125);
             
-            ctx.fillStyle = '#00ffff'; ctx.font = 'bold 24px Orbitron, sans-serif';
-            ctx.fillText('👉 PRESIONA EL GATILLO 👈', 256, 185);
-            ctx.font = '16px monospace'; ctx.fillText('PARA REINTENTAR', 256, 215);
+            ctx.fillStyle = '#ffe81f'; ctx.font = 'bold 24px Orbitron, sans-serif';
+            ctx.fillText('👉 PRESIONA GATILLO 👈', 256, 185);
+            ctx.font = '16px monospace'; ctx.fillText('PARA VOLVER A INTENTAR', 256, 215);
             
             const texture = new THREE.CanvasTexture(canvas);
             const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
-            vrMenuPlane = new THREE.Mesh(new THREE.PlaneGeometry(80, 40), mat);
+            vrMenuPlane = new THREE.Mesh(new THREE.PlaneGeometry(100, 50), mat);
             
-            vrMenuPlane.position.set(0, 5, -80);
+            vrMenuPlane.position.set(0, 35, -40);
             userGroup.add(vrMenuPlane);
             vrMenuPlane.visible = false;
         }
@@ -312,7 +322,6 @@
             enemyBody.rotation.x = Math.PI / 2; group.add(enemyBody);
             const worldPos = userGroup.position;
             
-            // CORREGIDO AQUÍ: Se cambió la referencia rota 'g' por 'group' para que no congele el loop
             group.position.set(
                 worldPos.x + (Math.random() - 0.5) * 4800,
                 worldPos.y + (Math.random() - 0.5) * 3200,
@@ -436,38 +445,55 @@
             let accelX = 0, accelY = 0, targetZ = 0;
             let turnSpeed = 0;
             
+            // ============================================================
+            // MAPEO REESTRUCTURADO Y CORREGIDO DE MAPA DE JOYSTICKS ASIMÉTRICOS:
+            // ============================================================
             if (renderer.xr.isPresenting) {
-                if (Math.abs(leftStickX) > 0.12) accelX = leftStickX * FLOTATION_ACCEL;
-                if (Math.abs(leftStickY) > 0.12) accelY = -leftStickY * FLOTATION_ACCEL;
-                if (Math.abs(rightStickX) > 0.12) turnSpeed = rightStickX * 2.5;
-                if (Math.abs(rightStickY) > 0.12) targetZ = rightStickY * 0.7; 
+                // 🕹️ JOYSTICK IZQUIERDO: Controla estrictamente la elevación vertical (Eje Y)
+                // - Hacia Arriba: Se eleva (accelY positivo)
+                // - Hacia Abajo: Desciende o se queda abajo (accelY negativo)
+                if (Math.abs(leftStickY) > 0.15) accelY = -leftStickY * FLOTATION_ACCEL;
+                
+                // 🕹️ JOYSTICK DERECHO: Controla el giro horizontal 360 y la propulsión frontal
+                // - Izq/Der: Rotación angular 360 (Eje X)
+                // - Hacia Arriba: Acelera hacia el frente (accelZ / targetZ positivo)
+                if (Math.abs(rightStickX) > 0.15) turnSpeed = rightStickX * 2.5;
+                if (rightStickY < -0.15) targetZ = Math.abs(rightStickY) * 200; // Joystick derecho hacia arriba acelera
             } else {
-                if (keys['KeyA']) accelX = -FLOTATION_ACCEL; if (keys['KeyD']) accelX = FLOTATION_ACCEL;
+                // Fallback Teclado Monitor PC
+                if (keys['KeyA']) turnSpeed = -2.5; if (keys['KeyD']) turnSpeed = 2.5;
                 if (keys['KeyW']) accelY = FLOTATION_ACCEL; if (keys['KeyS']) accelY = -FLOTATION_ACCEL;
-                if (keys['KeyQ']) turnSpeed = -2.8; if (keys['KeyE']) turnSpeed = 2.8;
-                if (keys['ShiftLeft']) targetZ = 120; if (keys['ControlLeft']) targetZ = -40;
+                if (keys['ShiftLeft']) targetZ = 120;
             }
             
-            velocityX += accelX; velocityY += accelY;
-            velocityX *= FRICTION; velocityY *= FRICTION;
+            // Acoplamiento físico con amortiguación inercial (Efecto Flotación)
+            velocityX *= FRICTION; 
+            velocityY += accelY; velocityY *= FRICTION;
             velocityZ = THREE.MathUtils.lerp(velocityZ, targetZ, 0.075);
             
+            // Aplicación de la rotación 360° en el eje Y al userGroup completo
             shipYaw += turnSpeed * 0.018;
             userGroup.rotation.y = shipYaw;
             
+            // Vectores de proyección angular relativos al rumbo de tu mirada
             const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(userGroup.quaternion);
             const rightVec = new THREE.Vector3(1, 0, 0).applyQuaternion(userGroup.quaternion);
             
-            userGroup.position.x += rightVec.x * velocityX * 0.1 + forward.x * velocityZ;
-            userGroup.position.z += rightVec.z * velocityX * 0.1 + forward.z * velocityZ;
+            // TRASLACIÓN CONJUNTA SÍNCRONA: Mueve todo el módulo de cabina por la escena
+            userGroup.position.x += forward.x * velocityZ;
+            userGroup.position.z += forward.z * velocityZ;
             userGroup.position.y += velocityY * 0.1;
+            
+            // Desplazamiento base automático inercial cósmico continuo
             userGroup.position.z -= 6; 
             
+            // Límites del mapa
             userGroup.position.x = Math.min(7500, Math.max(-7500, userGroup.position.x));
             userGroup.position.y = Math.min(4500, Math.max(-2500, userGroup.position.y));
             
+            // Balanceo estético local inercial en los alerones (Afecta solo al modelo)
             floatOffset += 0.025;
-            player.rotation.z = THREE.MathUtils.lerp(player.rotation.z, -velocityX * 0.045, 0.12);
+            player.rotation.z = THREE.MathUtils.lerp(player.rotation.z, -turnSpeed * 0.08, 0.12);
             player.rotation.x = THREE.MathUtils.lerp(player.rotation.x, velocityY * 0.025, 0.12);
             player.position.y = -12 + Math.sin(floatOffset) * 0.18; 
             
