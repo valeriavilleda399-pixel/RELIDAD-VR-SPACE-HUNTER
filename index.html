@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Space Hunter VR - Vibración + Navegación 360° | Valeria Abigail Villeda Hernández</title>
+    <title>Space Hunter VR - Cabina Unificada 360° | Valeria Abigail Villeda Hernández</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', 'Courier New', monospace; }
         
         #start-screen {
@@ -96,6 +96,7 @@
             .game-title { font-size: 1.5rem; }
             #hud-top { font-size: 14px; }
         }
+        button { font-family: inherit; }
     </style>
     <script type="importmap">
         {
@@ -110,17 +111,16 @@
 
     <div id="start-screen">
         <div class="start-card">
-            <div class="vr-badge">🥽 META QUEST 3 · VIBRACIÓN + NAVEGACIÓN 360° 🥽</div>
+            <div class="vr-badge">🥽 META QUEST 3 · CABINA UNIFICADA ESQUIVE DIRECTO 🥽</div>
             <h1 class="game-title">SPACE HUNTER VR</h1>
-            <p style="color:#0cf;">Cámara en cabina · Tú eres la nave</p>
+            <p style="color:#0cf;">Cabina Sincronizada · La nave se mueve estrictamente contigo</p>
             
             <div class="controls-vr">
                 <h3>🎮 CONTROLES VR</h3>
-                <p><span class="vr-icon">🕹️ JOYSTICK IZQ</span> → Mover nave (Flotación inercial)</p>
-                <p><span class="vr-icon">🕹️ JOYSTICK DER</span> → Girar nave 360° + Velocidad</p>
-                <p><span class="vr-icon">🔫 GATILLO</span> → Disparo láser al frente</p>
-                <p><span class="vr-icon">📳 VIBRACIÓN</span> → Al recibir daño (colisiones/disparos)</p>
-                <p><span class="vr-icon">🔫 PRIMERA PERSONA</span> → Cabina acoplada rígidamente al piloto</p>
+                <p><span class="vr-icon">🕹️ JOYSTICK IZQ</span> → Esquivar y Desplazar Cabina + Nave (X / Y)</p>
+                <p><span class="vr-icon">🕹️ JOYSTICK DER</span> → Girar Cámara 360° (X) + Velocidad de Avance (Y)</p>
+                <p><span class="vr-icon">🔫 GATILLO</span> → Disparo láser al frente desde la mira central</p>
+                <p><span class="vr-icon">📳 VIBRACIÓN HÁPTICA</span> → Pulso síncrono al recibir impactos</p>
             </div>
             
             <button class="start-btn" id="start-btn">🚀 INICIAR MISIÓN VR 🚀</button>
@@ -135,7 +135,7 @@
         <div id="vr-status">⏳ Conectando controles VR...</div>
         
         <div id="ui-bottom">
-            <div>🛸 VR 360° | Vibración háptica | Cámara en cabina</div>
+            <div>🛸 VR COCKPIT MATRIZ | Cabina amarrada rígidamente a tus ojos</div>
             <div>⌨️ PC: WASD + Q/E girar + ESPACIO disparar</div>
         </div>
     </div>
@@ -152,59 +152,44 @@
         import * as THREE from 'three';
         import { VRButton } from 'three/addons/webxr/VRButton.js';
 
-        // ============================================================
-        // 1. ESCENA, CÁMARA Y RENDERER
-        // ============================================================
+        // ---------- CONFIGURACIÓN INICIAL ----------
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x020210);
-        scene.fog = new THREE.FogExp2(0x020210, 0.00003);
-
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.5, 25000);
+        scene.fog = new THREE.FogExp2(0x020210, 0.000045);
+        
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.3, 28000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         renderer.xr.enabled = true;
         document.body.appendChild(renderer.domElement);
-
-        const vrButton = VRButton.createButton(renderer);
-        vrButton.style.position = 'fixed';
-        vrButton.style.bottom = '15px';
-        vrButton.style.right = '15px';
-        vrButton.style.zIndex = '300';
-        vrButton.style.padding = '10px 20px';
-        vrButton.style.fontSize = '12px';
-        document.body.appendChild(vrButton);
-
-        // ============================================================
-        // 2. GRUPO PRINCIPAL (CÁMARA + NAVE) - PRIMERA PERSONA
-        // ============================================================
-        const userGroup = new THREE.Group();
+        document.body.appendChild(VRButton.createButton(renderer));
+        
+        // ---------- GRUPO UNIFICADO (CABINA + CÁMARA) ----------
+        const userGroup = new THREE.Group();  // Este grupo contiene la cámara y la nave -> todo rotación/traslación afecta al piloto
         scene.add(userGroup);
         userGroup.add(camera);
         
-        // Ajuste en cabina estricta en primera persona
-        camera.position.set(0, 3, 15); 
-        camera.lookAt(0, 0, -50); 
-
+        // Controllers VR (añadidos para tracking y eventos)
         const controllerLeft = renderer.xr.getController(0);
         const controllerRight = renderer.xr.getController(1);
         userGroup.add(controllerLeft);
         userGroup.add(controllerRight);
-
+        
+        // ---------- VARIABLES DE GAMEPAD ----------
         let leftStickX = 0, leftStickY = 0;
         let rightStickX = 0, rightStickY = 0;
         let leftGamepad = null, rightGamepad = null;
         
         controllerLeft.addEventListener('connected', (e) => {
             if (e.data?.gamepad) leftGamepad = e.data.gamepad;
-            document.getElementById('vr-status').innerHTML = '✅ Control IZQ conectado';
+            document.getElementById('vr-status').innerHTML = '✅ Control IZQ acoplado | VR Activo';
         });
         controllerRight.addEventListener('connected', (e) => {
             if (e.data?.gamepad) rightGamepad = e.data.gamepad;
-            document.getElementById('vr-status').innerHTML = '✅ Ambos mandos VR listos';
+            document.getElementById('vr-status').innerHTML = '✅ Cabina y Haptics listos | Disparo Gatillo';
         });
-
+        
         function updateVRInputs() {
             const session = renderer.xr.getSession();
             if (!session?.inputSources) return;
@@ -222,20 +207,17 @@
                 }
             }
         }
-
-        // ============================================================
-        // 3. VIBRACIÓN HÁPTICA COORDENADA
-        // ============================================================
-        function vibrateControllers(intensity = 0.9, duration = 400) {
-            const vibIndicator = document.getElementById('vibration-indicator');
-            if (vibIndicator) {
-                vibIndicator.style.display = 'block';
-                vibIndicator.style.animation = 'none';
-                vibIndicator.offsetHeight;
-                vibIndicator.style.animation = 'vibrateText 0.3s ease-out';
-                setTimeout(() => { vibIndicator.style.display = 'none'; }, 400);
+        
+        // ---------- VIBRACIÓN HÁPTICA (EFECTO DIRECTO) ----------
+        function vibrateControllers(intensity = 0.9, duration = 420) {
+            const vibDiv = document.getElementById('vibration-indicator');
+            if (vibDiv) {
+                vibDiv.style.display = 'block';
+                vibDiv.style.animation = 'none';
+                vibDiv.offsetHeight;
+                vibDiv.style.animation = 'vibrateText 0.3s ease-out';
+                setTimeout(() => { vibDiv.style.display = 'none'; }, 400);
             }
-            
             if (leftGamepad?.hapticActuators?.[0]) {
                 leftGamepad.hapticActuators[0].playEffect('dual-rumble', {
                     startDelay: 0, duration: duration, strongMagnitude: intensity, weakMagnitude: intensity * 0.7
@@ -246,240 +228,256 @@
                     startDelay: 0, duration: duration, strongMagnitude: intensity, weakMagnitude: intensity * 0.7
                 }).catch(() => {});
             }
-            if (navigator.vibrate) {
-                navigator.vibrate([100, 50, 100]);
-            }
         }
-
-        // ============================================================
-        // 4. AUDIO
-        // ============================================================
-        const bgMusic = new Audio('assets/audio/space_ambient.mp3'); bgMusic.loop = true; bgMusic.volume = 0.3;
-        const laserSound = new Audio('assets/audio/laser.mp3'); laserSound.volume = 0.25;
-        const enemyLaserSound = new Audio('assets/audio/laser2.mp3'); enemyLaserSound.volume = 0.2;
-        const explosionSound = new Audio('assets/audio/explosion.mp3'); explosionSound.volume = 0.4;
         
-        function playSound(sound) { const clone = sound.cloneNode(); clone.play().catch(() => {}); }
-
-        // ============================================================
-        // 5. ILUMINACIÓN Y ESTRELLAS
-        // ============================================================
-        scene.add(new THREE.AmbientLight(0x404060, 0.6));
-        const dirLight = new THREE.DirectionalLight(0xffeedd, 2); dirLight.position.set(500, 800, 500); scene.add(dirLight);
-        const shipLight = new THREE.PointLight(0x00ffff, 2, 800); scene.add(shipLight);
-
+        // ---------- SONIDOS (PREVENTIVOS CON CLONACIÓN) ----------
+        const bgMusic = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3'); 
+        bgMusic.loop = true; bgMusic.volume = 0.2;
+        const laserSound = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3'); 
+        laserSound.volume = 0.2;
+        const enemyLaserSound = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'); 
+        enemyLaserSound.volume = 0.15;
+        const explosionSound = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3'); 
+        explosionSound.volume = 0.3;
+        function playSound(snd) { const clone = snd.cloneNode(); clone.play().catch(() => {}); }
+        
+        // ---------- ENTORNO ESPACIAL ----------
+        scene.add(new THREE.AmbientLight(0x303060, 0.65));
+        const dirLight = new THREE.DirectionalLight(0xffeedd, 1.8); dirLight.position.set(600, 1000, 400); scene.add(dirLight);
+        const fillLight = new THREE.PointLight(0x4466ff, 0.9, 3000); scene.add(fillLight);
+        const shipLight = new THREE.PointLight(0x33aaff, 2.4, 1400); scene.add(shipLight);
+        
+        // Campo de estrellas dinámico
         const starsGeo = new THREE.BufferGeometry();
-        const starsPos = new Float32Array(5000 * 3);
-        for (let i = 0; i < 5000; i++) {
-            starsPos[i*3] = (Math.random() - 0.5) * 20000;
-            starsPos[i*3+1] = (Math.random() - 0.5) * 14000;
-            starsPos[i*3+2] = (Math.random() - 0.5) * 15000;
+        const starsPos = new Float32Array(6000 * 3);
+        for (let i = 0; i < 6000; i++) {
+            starsPos[i*3] = (Math.random() - 0.5) * 22000;
+            starsPos[i*3+1] = (Math.random() - 0.5) * 16000;
+            starsPos[i*3+2] = (Math.random() - 0.5) * 18000;
         }
         starsGeo.setAttribute('position', new THREE.BufferAttribute(starsPos, 3));
-        scene.add(new THREE.Points(starsGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 1.5 })));
-
-        // ============================================================
-        // 6. NAVE DEL JUGADOR
-        // ============================================================
+        const starField = new THREE.Points(starsGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 1.4, transparent: true }));
+        scene.add(starField);
+        
+        // ---------- MODELO DE NAVE (ESTÉTICA DENTRO DE LA CABINA) ----------
         const player = new THREE.Group();
         userGroup.add(player);
-        
-        function createShip() {
-            const g = new THREE.Group();
-            const body = new THREE.Mesh(
-                new THREE.ConeGeometry(28, 60, 24),
-                new THREE.MeshStandardMaterial({ color: 0x3377ff, metalness: 0.9, roughness: 0.2, emissive: 0x002244 })
-            );
-            body.rotation.x = Math.PI / 2; g.add(body);
+        function buildShipModel() {
+            const group = new THREE.Group();
+            const bodyGeo = new THREE.ConeGeometry(32, 66, 32);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x3388ff, metalness: 0.9, roughness: 0.2, emissive: 0x002244 });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.rotation.x = Math.PI / 2;
+            group.add(body);
             
             const cockpit = new THREE.Mesh(
-                new THREE.SphereGeometry(10, 16, 16),
-                new THREE.MeshStandardMaterial({ color: 0x88ccff, emissive: 0x224466, transparent: true, opacity: 0.5 })
+                new THREE.SphereGeometry(12, 24, 24),
+                new THREE.MeshStandardMaterial({ color: 0xaaddff, emissive: 0x2277aa, transparent: true, opacity: 0.5 })
             );
-            cockpit.position.set(0, 4, 18); g.add(cockpit);
+            cockpit.position.set(0, 6, 24);
+            group.add(cockpit);
             
-            const wingMat = new THREE.MeshStandardMaterial({ color: 0x2266bb, metalness: 0.9 });
-            const lw = new THREE.Mesh(new THREE.BoxGeometry(42, 4, 20), wingMat); lw.position.set(-32, 2, -4); g.add(lw);
-            const rw = new THREE.Mesh(new THREE.BoxGeometry(42, 4, 20), wingMat); rw.position.set(32, 2, -4); g.add(rw);
-            return g;
+            const wingMat = new THREE.MeshStandardMaterial({ color: 0x2266cc, metalness: 0.85 });
+            const leftWing = new THREE.Mesh(new THREE.BoxGeometry(46, 5, 22), wingMat);
+            leftWing.position.set(-38, 3, -5);
+            group.add(leftWing);
+            const rightWing = new THREE.Mesh(new THREE.BoxGeometry(46, 5, 22), wingMat);
+            rightWing.position.set(38, 3, -5);
+            group.add(rightWing);
+            
+            const engineGlow = new THREE.Mesh(
+                new THREE.SphereGeometry(10, 16, 16),
+                new THREE.MeshStandardMaterial({ color: 0xff6600, emissive: 0xff3300, emissiveIntensity: 1.2 })
+            );
+            engineGlow.position.set(0, -2, -36);
+            group.add(engineGlow);
+            return group;
         }
-        
-        player.add(createShip());
-        player.position.set(0, -2, -5);
+        player.add(buildShipModel());
+        player.position.set(0, -7, -38);
         player.rotation.set(0, 0, 0);
-
-        // ============================================================
-        // 7. SISTEMAS DE JUEGO Y MATERIALES ASÍNCRONOS
-        // ============================================================
+        camera.position.set(0, 3, 0);
+        
+        // ---------- ELEMENTOS DEL JUEGO ----------
         let enemies = [], obstacles = [], playerBullets = [], enemyBullets = [];
         let score = 0, hp = 3, difficulty = 1;
         let isPaused = false, gameActive = false;
         let velocityX = 0, velocityY = 0, velocityZ = 0;
-        let shipYaw = 0; 
-        const FRICTION = 0.93, FLOTATION_ACCEL = 2.8; // Unificado el nombre de aceleración aquí
-
+        let shipYaw = 0, floatOffset = 0;
+        const FRICTION = 0.94, FLOTATION_ACCEL = 3.0;
+        
         const scoreElem = document.getElementById('score-val');
         const hpElem = document.getElementById('hp-val');
         const gameOverAlert = document.getElementById('game-over-alert');
-
-        // Carga asíncrona robusta con color base preventivo para evitar pantallas negras
-        const texLoader = new THREE.TextureLoader();
-        const rockMat = new THREE.MeshStandardMaterial({ color: 0x997755, roughness: 0.8, metalness: 0.15 });
-        texLoader.load('assets/textures/metorito.jpg', (texture) => {
-            rockMat.map = texture; rockMat.needsUpdate = true;
-        }, undefined, () => console.log("Textura offline - Usando mapeo de color por defecto."));
         
+        // Materiales asteroides
+        const rockMat = new THREE.MeshStandardMaterial({ color: 0xaa8866, roughness: 0.7, metalness: 0.1 });
         const rockGeometries = [
-            new THREE.DodecahedronGeometry(35, 0),
-            new THREE.IcosahedronGeometry(32, 0),
-            new THREE.OctahedronGeometry(36)
+            new THREE.DodecahedronGeometry(28, 0),
+            new THREE.IcosahedronGeometry(30, 0),
+            new THREE.OctahedronGeometry(32)
         ];
-
+        
         function spawnObstacle() {
             const geo = rockGeometries[Math.floor(Math.random() * rockGeometries.length)];
             const rock = new THREE.Mesh(geo, rockMat);
-            rock.scale.setScalar(0.7 + Math.random() * 1.5);
+            rock.scale.setScalar(0.65 + Math.random() * 1.6);
+            const worldPos = userGroup.position;
             rock.position.set(
-                userGroup.position.x + (Math.random() - 0.5) * 6000,
-                userGroup.position.y + (Math.random() - 0.5) * 4000,
-                userGroup.position.z - 8000 - Math.random() * 5000
+                worldPos.x + (Math.random() - 0.5) * 7000,
+                worldPos.y + (Math.random() - 0.5) * 4500,
+                worldPos.z - 9000 - Math.random() * 6000
             );
-            scene.add(rock); obstacles.push(rock);
+            rock.userData = { spinSpeed: 0.008 + Math.random() * 0.02 };
+            scene.add(rock);
+            obstacles.push(rock);
         }
-
+        
         function spawnEnemy() {
-            const g = new THREE.Group();
-            const body = new THREE.Mesh(
-                new THREE.CylinderGeometry(18, 24, 40, 10),
-                new THREE.MeshStandardMaterial({ color: 0xdd3333, emissive: 0x440000 })
+            const group = new THREE.Group();
+            const enemyBody = new THREE.Mesh(
+                new THREE.CylinderGeometry(20, 26, 44, 12),
+                new THREE.MeshStandardMaterial({ color: 0xdd4422, emissive: 0x441100, metalness: 0.4 })
             );
-            body.rotation.x = Math.PI / 2; g.add(body);
-            
-            g.position.set(
-                userGroup.position.x + (Math.random() - 0.5) * 4000,
-                userGroup.position.y + (Math.random() - 0.5) * 2500,
-                userGroup.position.z - 6000 - Math.random() * 3000
+            enemyBody.rotation.x = Math.PI / 2;
+            group.add(enemyBody);
+            const spike = new THREE.Mesh(new THREE.ConeGeometry(12, 28, 8), new THREE.MeshStandardMaterial({ color: 0xaa5533 }));
+            spike.position.set(0, 0, 28);
+            group.add(spike);
+            const worldPos = userGroup.position;
+            group.position.set(
+                worldPos.x + (Math.random() - 0.5) * 4800,
+                worldPos.y + (Math.random() - 0.5) * 3200,
+                worldPos.z - 7000 - Math.random() * 4000
             );
-            scene.add(g);
-            enemies.push({ mesh: g, speed: 12 + Math.random() * 10, lastShot: Date.now() });
+            scene.add(group);
+            enemies.push({ mesh: group, speed: 14 + Math.random() * 12, lastShot: Date.now() });
         }
-
+        
         function createExplosion(pos) {
             playSound(explosionSound);
-            const count = 35; const geo = new THREE.BufferGeometry();
+            const count = 45;
+            const geoExp = new THREE.BufferGeometry();
             const positions = []; const velocities = [];
             for (let i = 0; i < count; i++) {
                 positions.push(pos.x, pos.y, pos.z);
-                velocities.push((Math.random()-0.5)*120, (Math.random()-0.5)*120, (Math.random()-0.5)*120);
+                velocities.push((Math.random() - 0.5) * 140, (Math.random() - 0.5) * 140, (Math.random() - 0.5) * 140);
             }
-            geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-            const mat = new THREE.PointsMaterial({ color: 0xffaa00, size: 30, transparent: true, opacity: 1 });
-            const sys = new THREE.Points(geo, mat); scene.add(sys);
-            
-            const light = new THREE.PointLight(0xff6600, 15, 1000); light.position.copy(pos); scene.add(light);
-            
-            const start = Date.now();
-            function anim() {
-                const elapsed = (Date.now() - start) / 1000;
-                if (elapsed > 0.5) { scene.remove(sys); scene.remove(light); } 
-                else {
-                    const arr = sys.geometry.attributes.position.array;
-                    for (let i = 0; i < count; i++) {
-                        arr[i*3] += velocities[i*3] * 0.016; arr[i*3+1] += velocities[i*3+1] * 0.016; arr[i*3+2] += velocities[i*3+2] * 0.016;
-                    }
-                    sys.geometry.attributes.position.needsUpdate = true; mat.opacity = 1 - (elapsed / 0.5);
-                    requestAnimationFrame(anim);
+            geoExp.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            const expMat = new THREE.PointsMaterial({ color: 0xff7700, size: 28, transparent: true, opacity: 1 });
+            const particleSys = new THREE.Points(geoExp, expMat);
+            scene.add(particleSys);
+            const flashLight = new THREE.PointLight(0xff4400, 20, 1200);
+            flashLight.position.copy(pos);
+            scene.add(flashLight);
+            const startTime = Date.now();
+            function animateExplosion() {
+                const elapsed = (Date.now() - startTime) / 1000;
+                if (elapsed > 0.65) {
+                    scene.remove(particleSys);
+                    scene.remove(flashLight);
+                    return;
                 }
+                const arr = particleSys.geometry.attributes.position.array;
+                for (let i = 0; i < count; i++) {
+                    arr[i*3] += velocities[i*3] * 0.018;
+                    arr[i*3+1] += velocities[i*3+1] * 0.018;
+                    arr[i*3+2] += velocities[i*3+2] * 0.018;
+                }
+                particleSys.geometry.attributes.position.needsUpdate = true;
+                expMat.opacity = 1 - (elapsed / 0.65);
+                flashLight.intensity = 20 * (1 - elapsed / 0.65);
+                requestAnimationFrame(animateExplosion);
             }
-            anim();
+            animateExplosion();
         }
-
+        
         function fireBullet() {
             playSound(laserSound);
-            const laser = new THREE.Mesh(
-                new THREE.CylinderGeometry(4, 4, 100, 8),
-                new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00ffff })
+            const bullet = new THREE.Mesh(
+                new THREE.CylinderGeometry(5, 5, 110, 12),
+                new THREE.MeshStandardMaterial({ color: 0x44ffff, emissive: 0x00bbff, emissiveIntensity: 0.8 })
             );
-            laser.rotation.x = Math.PI / 2;
-            
-            const worldPos = new THREE.Vector3(); player.getWorldPosition(worldPos);
-            laser.position.copy(worldPos).add(new THREE.Vector3(0, 5, 25).applyQuaternion(player.quaternion));
-            
-            const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(player.quaternion);
-            laser.userData = { direction: dir, speed: 350 };
-            scene.add(laser); playerBullets.push(laser);
+            bullet.rotation.x = Math.PI / 2;
+            const worldPos = new THREE.Vector3();
+            player.getWorldPosition(worldPos);
+            bullet.position.copy(worldPos);
+            const forwardDir = new THREE.Vector3(0, 0, -1).applyQuaternion(userGroup.quaternion);
+            bullet.userData = { direction: forwardDir, speed: 390 };
+            scene.add(bullet);
+            playerBullets.push(bullet);
         }
-
+        
         function enemyShoot(enemyMesh) {
             playSound(enemyLaserSound);
-            const laser = new THREE.Mesh(
-                new THREE.CylinderGeometry(4, 4, 70, 8),
-                new THREE.MeshStandardMaterial({ color: 0xff2200, emissive: 0xcc2200 })
+            const eLaser = new THREE.Mesh(
+                new THREE.CylinderGeometry(4.5, 4.5, 80, 8),
+                new THREE.MeshStandardMaterial({ color: 0xff4422, emissive: 0xcc2200 })
             );
-            laser.rotation.x = Math.PI / 2; laser.position.copy(enemyMesh.position);
-            
-            const playerWorldPos = new THREE.Vector3(); player.getWorldPosition(playerWorldPos);
-            const dir = new THREE.Vector3().subVectors(playerWorldPos, enemyMesh.position).normalize();
-            
-            laser.userData = { direction: dir, speed: 160 };
-            scene.add(laser); enemyBullets.push(laser);
+            eLaser.rotation.x = Math.PI / 2;
+            eLaser.position.copy(enemyMesh.position);
+            const targetPos = new THREE.Vector3();
+            player.getWorldPosition(targetPos);
+            const dir = new THREE.Vector3().subVectors(targetPos, enemyMesh.position).normalize();
+            eLaser.userData = { direction: dir, speed: 180 };
+            scene.add(eLaser);
+            enemyBullets.push(eLaser);
         }
-
-        // Unificado contra incongruencias de nombres previos
-        function handleDamage() {
+        
+        function handleCollision() {
             if (!gameActive || hp <= 0) return;
-            
-            vibrateControllers(1.0, 450);
-            hp--; hpElem.innerText = hp;
-            
-            const worldPos = new THREE.Vector3(); player.getWorldPosition(worldPos);
-            createExplosion(worldPos);
-            
+            vibrateControllers(1.0, 550);
+            hp--;
+            hpElem.innerText = hp;
+            const impactPos = new THREE.Vector3();
+            player.getWorldPosition(impactPos);
+            createExplosion(impactPos);
             if (hp <= 0) {
-                gameActive = false; gameOverAlert.style.display = 'block'; isPaused = true; bgMusic.pause();
-                vibrateControllers(1.0, 800); 
+                gameActive = false;
+                gameOverAlert.style.display = 'block';
+                isPaused = true;
+                bgMusic.pause();
+                vibrateControllers(1.2, 900);
             }
         }
-
+        
         function resetGame() {
             hp = 3; score = 0; difficulty = 1; gameActive = true; isPaused = false;
             velocityX = velocityY = velocityZ = 0; shipYaw = 0;
             hpElem.innerText = hp; scoreElem.innerText = score;
             gameOverAlert.style.display = 'none';
-            document.getElementById('warning').innerHTML = "💎 ¡MONTÓN DE OBSTÁCULOS! ESQUIVALOS 💎";
             bgMusic.currentTime = 0; bgMusic.play().catch(() => {});
-            
             enemies.forEach(e => scene.remove(e.mesh)); enemies = [];
             obstacles.forEach(o => scene.remove(o)); obstacles = [];
             playerBullets.forEach(b => scene.remove(b)); playerBullets = [];
             enemyBullets.forEach(b => scene.remove(b)); enemyBullets = [];
-            
             userGroup.position.set(0, 0, 0);
-            player.position.set(0, -2, -5);
+            userGroup.rotation.set(0, 0, 0);
+            player.position.set(0, -7, -38);
             player.rotation.set(0, 0, 0);
-            camera.position.set(0, 3, 15);
-            camera.lookAt(0, 0, -50);
         }
-
-        // ============================================================
-        // 8. ASIGNACIÓN DE FILTROS SENSORIALES
-        // ============================================================
+        
+        // ----- DISPARO CON GATILLO -----
         controllerLeft.addEventListener('selectstart', () => { if (gameActive && !isPaused && hp > 0) fireBullet(); });
         controllerRight.addEventListener('selectstart', () => { if (gameActive && !isPaused && hp > 0) fireBullet(); });
-
+        
+        // ----- EVENTOS UI -----
         document.getElementById('start-btn').addEventListener('click', () => {
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('game-ui').style.display = 'block';
-            gameActive = true; bgMusic.play().catch(() => {});
+            gameActive = true;
+            isPaused = false;
+            bgMusic.play().catch(() => {});
+            resetGame(); // fresh start
         });
-
         document.getElementById('restart-btn').addEventListener('click', resetGame);
         document.getElementById('pause-btn').addEventListener('click', () => {
+            if (!gameActive) return;
             isPaused = !isPaused;
             document.getElementById('pause-btn').innerText = isPaused ? '▶ REANUDAR' : '⏸ PAUSA';
             if (isPaused) bgMusic.pause(); else bgMusic.play().catch(() => {});
         });
-
+        
         const keys = {};
         window.addEventListener('keydown', (e) => {
             keys[e.code] = true;
@@ -488,159 +486,144 @@
             }
         });
         window.addEventListener('keyup', (e) => keys[e.code] = false);
-
-        // ============================================================
-        // 9. LOOP PRINCIPAL CON ENFOQUE DINÁMICO CORREGIDO
-        // ============================================================
+        
+        // ----- LOOP PRINCIPAL DINÁMICO -----
         let spawnTimer = 0, enemyTimer = 0;
-
+        
         function updateGame() {
             if (!gameActive || isPaused || hp <= 0) return;
             
             updateVRInputs();
-            
             let accelX = 0, accelY = 0, targetZ = 0;
             let turnSpeed = 0;
             
             if (renderer.xr.isPresenting) {
-                // Joystick IZQUIERDO: Traslación horizontal/vertical
-                if (Math.abs(leftStickX) > 0.15) accelX = leftStickX * FLOTATION_ACCEL;
-                if (Math.abs(leftStickY) > 0.15) accelY = -leftStickY * FLOTATION_ACCEL;
-                
-                // Joystick DERECHO: Giro completo 360 e impulso hiperespacial
-                if (Math.abs(rightStickX) > 0.15) turnSpeed = rightStickX * 2.5;
-                if (Math.abs(rightStickY) > 0.15) targetZ = rightStickY > 0 ? 200 : -60;
+                if (Math.abs(leftStickX) > 0.12) accelX = leftStickX * FLOTATION_ACCEL;
+                if (Math.abs(leftStickY) > 0.12) accelY = -leftStickY * FLOTATION_ACCEL;
+                if (Math.abs(rightStickX) > 0.12) turnSpeed = rightStickX * 2.8;
+                if (Math.abs(rightStickY) > 0.12) targetZ = rightStickY > 0 ? 210 : -55;
             } else {
-                // Teclado PC Fallback
                 if (keys['KeyA']) accelX = -FLOTATION_ACCEL; if (keys['KeyD']) accelX = FLOTATION_ACCEL;
                 if (keys['KeyW']) accelY = FLOTATION_ACCEL; if (keys['KeyS']) accelY = -FLOTATION_ACCEL;
-                if (keys['KeyQ']) turnSpeed = -2.5; if (keys['KeyE']) turnSpeed = 2.5; 
-                if (keys['ShiftLeft']) targetZ = 200; if (keys['ControlLeft']) targetZ = -60;
+                if (keys['KeyQ']) turnSpeed = -2.8; if (keys['KeyE']) turnSpeed = 2.8;
+                if (keys['ShiftLeft']) targetZ = 210; if (keys['ControlLeft']) targetZ = -55;
             }
             
             velocityX += accelX; velocityY += accelY;
             velocityX *= FRICTION; velocityY *= FRICTION;
-            velocityZ = THREE.MathUtils.lerp(velocityZ, targetZ, 0.07);
+            velocityZ = THREE.MathUtils.lerp(velocityZ, targetZ, 0.075);
             
-            // Giro inercial 360 de la proa
-            shipYaw += turnSpeed * 0.02;
-            player.rotation.y = shipYaw;
+            shipYaw += turnSpeed * 0.018;
+            userGroup.rotation.y = shipYaw;
             
-            // Matriz de empuje angular proyectado por cuaterniones
-            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(player.quaternion);
-            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(player.quaternion);
+            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(userGroup.quaternion);
+            const rightVec = new THREE.Vector3(1, 0, 0).applyQuaternion(userGroup.quaternion);
             
-            player.position.x += right.x * velocityX + forward.x * velocityZ * 0.05;
-            player.position.z += right.z * velocityX + forward.z * velocityZ * 0.05;
-            player.position.y += velocityY;
+            userGroup.position.x += rightVec.x * velocityX + forward.x * velocityZ * 0.05;
+            userGroup.position.z += rightVec.z * velocityX + forward.z * velocityZ * 0.05;
+            userGroup.position.y += velocityY;
+            userGroup.position.z -= (velocityZ * 0.12 + 7.6);
             
-            // Traslación cósmica total del visor
-            userGroup.position.z -= (velocityZ * 0.15 + 8);
+            userGroup.position.x = Math.min(6500, Math.max(-6500, userGroup.position.x));
+            userGroup.position.y = Math.min(4200, Math.max(-2200, userGroup.position.y));
             
-            // Límites del cuadrante
-            player.position.x = Math.min(2500, Math.max(-2500, player.position.x));
-            player.position.y = Math.min(2000, Math.max(-1100, player.position.y));
-            player.position.z = Math.min(500, Math.max(-500, player.position.z));
-            
-            // Inclinación aerodinámica de las alas
-            player.rotation.z = THREE.MathUtils.lerp(player.rotation.z, -velocityX * 0.03, 0.1);
-            player.rotation.x = THREE.MathUtils.lerp(player.rotation.x, velocityY * 0.015, 0.1);
-            
-            // Cámara Amarrada ("La cámara sigo siendo yo")
-            const camOffset = new THREE.Vector3(0, 3, 15).applyQuaternion(player.quaternion);
-            camera.position.copy(player.position).add(camOffset);
-            
-            const lookTarget = player.position.clone().add(new THREE.Vector3(0, 0, -100).applyQuaternion(player.quaternion));
-            camera.lookAt(lookTarget);
-            
-            shipLight.position.copy(player.position);
+            floatOffset += 0.025;
+            player.rotation.z = THREE.MathUtils.lerp(player.rotation.z, -velocityX * 0.045, 0.12);
+            player.rotation.x = THREE.MathUtils.lerp(player.rotation.x, velocityY * 0.025, 0.12);
+            player.position.y = -7 + Math.sin(floatOffset) * 0.18;
+            shipLight.position.copy(userGroup.position);
             
             const playerWorldPos = new THREE.Vector3(); player.getWorldPosition(playerWorldPos);
             
-            // Spawners de Objetos
             spawnTimer++; enemyTimer++;
-            if (spawnTimer >= Math.max(12, 28 - difficulty)) {
+            if (spawnTimer >= Math.max(11, 27 - difficulty)) {
                 spawnTimer = 0;
-                const count = Math.min(2 + Math.floor(difficulty / 2), 5);
+                let count = Math.min(3 + Math.floor(difficulty / 2), 6);
                 for (let i = 0; i < count; i++) spawnObstacle();
             }
-            if (enemyTimer >= Math.max(25, 70 - difficulty * 5)) {
-                enemyTimer = 0; spawnEnemy();
+            if (enemyTimer >= Math.max(22, 65 - difficulty * 4)) {
+                enemyTimer = 0;
+                spawnEnemy();
             }
             
-            // Procesamiento de Obstáculos
-            for (let i = obstacles.length - 1; i >= 0; i--) {
+            // Obstáculos
+            for (let i = obstacles.length-1; i >= 0; i--) {
                 const obs = obstacles[i];
-                obs.position.z += 25; obs.rotation.x += 0.01; obs.rotation.y += 0.008;
-                
-                if (obs.position.distanceTo(playerWorldPos) < 120) {
-                    handleDamage(); scene.remove(obs); obstacles.splice(i, 1);
-                } else if (obs.position.z > playerWorldPos.z + 1500) {
-                    scene.remove(obs); obstacles.splice(i, 1);
+                obs.position.z += 28;
+                obs.rotation.x += 0.012; obs.rotation.y += 0.009;
+                if (obs.position.distanceTo(playerWorldPos) < 115) {
+                    handleCollision();
+                    scene.remove(obs); obstacles.splice(i,1);
+                } else if (obs.position.z > playerWorldPos.z + 2000) {
+                    scene.remove(obs); obstacles.splice(i,1);
                 }
             }
             
-            // Procesamiento de Flotas Enemigas
-            for (let i = enemies.length - 1; i >= 0; i--) {
-                const e = enemies[i]; e.mesh.position.z += e.speed;
-                e.mesh.position.x += (playerWorldPos.x - e.mesh.position.x) * 0.003;
+            // Enemigos
+            for (let i = enemies.length-1; i >= 0; i--) {
+                const e = enemies[i];
+                e.mesh.position.z += e.speed;
+                e.mesh.position.x += (playerWorldPos.x - e.mesh.position.x) * 0.0035;
                 e.mesh.position.y += (playerWorldPos.y - e.mesh.position.y) * 0.004;
                 e.mesh.lookAt(playerWorldPos);
-                
-                if (Date.now() - e.lastShot > 1800 && e.mesh.position.z < playerWorldPos.z - 200) {
+                if (Date.now() - e.lastShot > 1650 && e.mesh.position.z < playerWorldPos.z - 150) {
                     enemyShoot(e.mesh); e.lastShot = Date.now();
                 }
-                if (e.mesh.position.distanceTo(playerWorldPos) < 120) {
-                    handleDamage(); scene.remove(e.mesh); enemies.splice(i, 1);
-                } else if (e.mesh.position.z > playerWorldPos.z + 1500) {
-                    scene.remove(e.mesh); enemies.splice(i, 1);
+                if (e.mesh.position.distanceTo(playerWorldPos) < 115) {
+                    handleCollision();
+                    scene.remove(e.mesh); enemies.splice(i,1);
+                } else if (e.mesh.position.z > playerWorldPos.z + 2200) {
+                    scene.remove(e.mesh); enemies.splice(i,1);
                 }
             }
             
-            // Láseres Propios
-            for (let i = playerBullets.length - 1; i >= 0; i--) {
+            // Balas propias
+            for (let i=playerBullets.length-1; i>=0; i--) {
                 const b = playerBullets[i];
-                b.position.x += b.userData.direction.x * b.userData.speed * 0.016;
-                b.position.y += b.userData.direction.y * b.userData.speed * 0.016;
-                b.position.z += b.userData.direction.z * b.userData.speed * 0.016;
-                
+                b.position.x += b.userData.direction.x * b.userData.speed * 0.018;
+                b.position.y += b.userData.direction.y * b.userData.speed * 0.018;
+                b.position.z += b.userData.direction.z * b.userData.speed * 0.018;
                 let hit = false;
-                for (let j = enemies.length - 1; j >= 0; j--) {
-                    if (b.position.distanceTo(enemies[j].mesh.position) < 120) {
+                for (let j=enemies.length-1; j>=0; j--) {
+                    if (b.position.distanceTo(enemies[j].mesh.position) < 110) {
                         createExplosion(enemies[j].mesh.position);
-                        scene.remove(enemies[j].mesh); enemies.splice(j, 1);
-                        hit = true; score++; scoreElem.innerText = score;
-                        difficulty = Math.min(10, Math.floor(score / 5) + 1); break;
+                        scene.remove(enemies[j].mesh); enemies.splice(j,1);
+                        hit = true;
+                        score++; scoreElem.innerText = score;
+                        difficulty = Math.min(10, Math.floor(score/4) + 1);
+                        break;
                     }
                 }
-                if (hit || Math.abs(b.position.z - playerWorldPos.z) > 5000) {
-                    scene.remove(b); playerBullets.splice(i, 1);
+                if (hit || Math.abs(b.position.z - playerWorldPos.z) > 5500) {
+                    scene.remove(b); playerBullets.splice(i,1);
                 }
             }
             
-            // Láseres Enemigos
-            for (let i = enemyBullets.length - 1; i >= 0; i--) {
+            // Balas enemigas
+            for (let i=enemyBullets.length-1; i>=0; i--) {
                 const eb = enemyBullets[i];
-                eb.position.x += eb.userData.direction.x * eb.userData.speed * 0.016;
-                eb.position.y += eb.userData.direction.y * eb.userData.speed * 0.016;
-                eb.position.z += eb.userData.direction.z * eb.userData.speed * 0.016;
-                
-                if (eb.position.distanceTo(playerWorldPos) < 70) {
-                    handleDamage(); scene.remove(eb); enemyBullets.splice(i, 1);
-                } else if (Math.abs(eb.position.z - playerWorldPos.z) > 5000) {
-                    scene.remove(eb); enemyBullets.splice(i, 1);
+                eb.position.x += eb.userData.direction.x * eb.userData.speed * 0.018;
+                eb.position.y += eb.userData.direction.y * eb.userData.speed * 0.018;
+                eb.position.z += eb.userData.direction.z * eb.userData.speed * 0.018;
+                if (eb.position.distanceTo(playerWorldPos) < 80) {
+                    handleCollision();
+                    scene.remove(eb); enemyBullets.splice(i,1);
+                } else if (Math.abs(eb.position.z - playerWorldPos.z) > 5500) {
+                    scene.remove(eb); enemyBullets.splice(i,1);
                 }
             }
+            
+            starField.rotation.y += 0.0002;
         }
-
-        // Render loop
+        
         renderer.setAnimationLoop(() => {
             updateGame();
             renderer.render(scene, camera);
         });
-
+        
         window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
