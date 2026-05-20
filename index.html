@@ -98,14 +98,14 @@
 
     <div id="start-screen">
         <div class="start-card">
-            <div class="vr-badge">🥽 META QUEST 3 · TRASLACIÓN REPARADA VR 🥽</div>
+            <div class="vr-badge">🥽 META QUEST 3 · CABINA EN PRIMERA PERSONA 🥽</div>
             <h1 class="game-title">SPACE HUNTER VR</h1>
-            <p style="color:#0cf;">Físicas de Esquive y Flotación Corregidas</p>
+            <p style="color:#0cf;">¡Tú eres la nave! Navegación e impactos relativos acoplados</p>
             
             <div class="controls-vr">
                 <h3>🎮 CALIBRACIÓN DE MANDOS</h3>
-                <p><span class="vr-icon">🕹️ JOYSTICK IZQ</span> → Esquivar Lateral (X) y Altura (Y) de forma fluida</p>
-                <p><span class="vr-icon">🕹️ JOYSTICK DER</span> → Arriba: Propulsión de avance hiperespacial (Z)</p>
+                <p><span class="vr-icon">🕹️ JOYSTICK IZQ</span> → Navegar y esquivar por el escenario (Ejes X / Y)</p>
+                <p><span class="vr-icon">🕹️ JOYSTICK DER</span> → Arriba: Propulsión de avance hiperespacial (Eje Z)</p>
                 <p><span class="vr-icon">🔫 GATILLO</span> → Abrir fuego frontal / Confirmar Reinicio en Menú VR</p>
                 <p><span class="vr-icon">🎯 PUNTERO</span> → Retícula reactiva 3D (Cambia a ROJO al fijar objetivos)</p>
             </div>
@@ -161,11 +161,7 @@
         let leftGamepad = null, rightGamepad = null;
         
         controllerLeft.addEventListener('connected', (e) => { if (e.data?.gamepad) leftGamepad = e.data.gamepad; });
-        controllerRight.addEventListener('connected', (e) => { 
-            if (e.data?.gamepad) rightGamepad = e.data.gamepad; 
-            document.getElementById('vr-status').innerHTML = '✅ Mandos VR Listos';
-            document.getElementById('vr-status').style.color = '#0f0';
-        });
+        controllerRight.addEventListener('connected', (e) => { if (e.data?.gamepad) rightGamepad = e.data.gamepad; });
         
         function updateVRInputs() {
             const session = renderer.xr.getSession();
@@ -184,6 +180,11 @@
         
         // ---------- VIBRACIÓN HÁPTICA DIRECTA ----------
         function vibrateControllers(intensity = 1.0, duration = 450) {
+            const vibIndicator = document.getElementById('vibration-indicator');
+            if (vibIndicator) {
+                vibIndicator.style.display = 'block';
+                setTimeout(() => { if (vibIndicator) vibIndicator.style.display = 'none'; }, duration);
+            }
             if (leftGamepad?.hapticActuators?.[0]) {
                 leftGamepad.hapticActuators[0].playEffect('dual-rumble', {
                     startDelay: 0, duration: duration, strongMagnitude: intensity, weakMagnitude: intensity * 0.7
@@ -196,11 +197,22 @@
             }
         }
         
-        // ---------- RECURSOS DE AUDIO LOCALES ----------
-        const bgMusic = new Audio('assets/audio/space_ambient.mp3'); bgMusic.loop = true; bgMusic.volume = 0.2;
-        const laserSound = new Audio('assets/audio/laser.mp3'); laserSound.volume = 0.2;
-        const enemyLaserSound = new Audio('assets/audio/laser2.mp3'); enemyLaserSound.volume = 0.15;
-        const explosionSound = new Audio('assets/audio/explosion.mp3'); explosionSound.volume = 0.3;
+        // ---------- RECURSOS DE AUDIO LOCALES (con fallback seguro) ----------
+        const bgMusic = new Audio();
+        bgMusic.loop = true; bgMusic.volume = 0.2;
+        const laserSound = new Audio(); laserSound.volume = 0.2;
+        const enemyLaserSound = new Audio(); enemyLaserSound.volume = 0.15;
+        const explosionSound = new Audio(); explosionSound.volume = 0.3;
+        
+        function initAudio() {
+            try {
+                bgMusic.src = 'assets/audio/space_ambient.mp3';
+                laserSound.src = 'assets/audio/laser.mp3';
+                enemyLaserSound.src = 'assets/audio/laser2.mp3';
+                explosionSound.src = 'assets/audio/explosion.mp3';
+            } catch(e) {}
+        }
+        initAudio();
         
         function playSound(snd) { 
             try { const clone = snd.cloneNode(); clone.play().catch(() => {}); } catch(e) {}
@@ -222,7 +234,7 @@
         const starField = new THREE.Points(starsGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 1.4, transparent: true }));
         scene.add(starField);
         
-        // ---------- CABINA EN PRIMERA PERSONA ----------
+        // ---------- CABINA EN PRIMERA PERSONA (TÚ ERES LA NAVE) ----------
         const player = new THREE.Group();
         userGroup.add(player); 
         
@@ -243,22 +255,26 @@
         }
         player.add(buildShipModel());
         
-        // Vista de cabina síncrona
+        // 👁️ VISTA INTEGRAL DESDE LA CABINA: ojos en el origen, morro visible
         player.position.set(0, -10, -15);
         player.rotation.set(0, 0, 0);
         camera.position.set(0, 0, 0); 
         camera.lookAt(0, 0, -100);
 
-        // ---------- RETÍCULA REACTIVA ESPACIAL ----------
+        // ============================================================
+        // 🎯 PUNTERO REACTIVO ESPACIAL (RETÍCULA HOLOGRÁFICA 3D)
+        // ============================================================
         const crosshairGeo = new THREE.RingGeometry(1.8, 2.4, 16);
         const crosshairMat = new THREE.MeshBasicMaterial({ color: 0x00ffff, side: THREE.DoubleSide, transparent: true, opacity: 0.85 });
         const crosshair = new THREE.Mesh(crosshairGeo, crosshairMat);
-        crosshair.position.set(0, 0, -120); 
+        crosshair.position.set(0, 0, -120);
         userGroup.add(crosshair);
 
         const raycaster = new THREE.Raycaster();
 
-        // ---------- MENÚ DE REINICIO 3D VR ----------
+        // ============================================================
+        // MENÚ DE REINICIO 3D HOLOGRÁFICO FLOTANTE
+        // ============================================================
         let vrMenuPlane = null;
         
         function createVRMenu() {
@@ -284,7 +300,6 @@
             const texture = new THREE.CanvasTexture(canvas);
             const mat = new THREE.MeshBasicMaterial({ map: texture, transparent: true, side: THREE.DoubleSide });
             vrMenuPlane = new THREE.Mesh(new THREE.PlaneGeometry(60, 30), mat);
-            
             vrMenuPlane.position.set(0, 0, -50);
             userGroup.add(vrMenuPlane);
             vrMenuPlane.visible = false;
@@ -302,9 +317,6 @@
         const hpElem = document.getElementById('hp-val');
         
         const rockMat = new THREE.MeshStandardMaterial({ color: 0xaa8866, roughness: 0.7, metalness: 0.1 });
-        const texLoader = new THREE.TextureLoader();
-        texLoader.load('assets/textures/metorito.jpg', (texture) => { rockMat.map = texture; rockMat.needsUpdate = true; }, undefined, () => {});
-        
         const rockGeometries = [new THREE.DodecahedronGeometry(28, 0), new THREE.IcosahedronGeometry(30, 0), new THREE.OctahedronGeometry(32)];
         
         function spawnObstacle() {
@@ -324,8 +336,12 @@
             const group = new THREE.Group();
             const enemyBody = new THREE.Mesh(new THREE.CylinderGeometry(20, 26, 44, 12), new THREE.MeshStandardMaterial({ color: 0xdd4422, emissive: 0x441100 }));
             enemyBody.rotation.x = Math.PI / 2; group.add(enemyBody);
-            const worldPos = userGroup.position;
+            // añadir un aura roja para mayor visibilidad
+            const auraMat = new THREE.MeshBasicMaterial({ color: 0xff3300, transparent: true, opacity: 0.25 });
+            const aura = new THREE.Mesh(new THREE.SphereGeometry(34, 8, 8), auraMat);
+            group.add(aura);
             
+            const worldPos = userGroup.position;
             group.position.set(
                 worldPos.x + (Math.random() - 0.5) * 4800,
                 worldPos.y + (Math.random() - 0.5) * 3200,
@@ -336,7 +352,7 @@
         
         function createExplosion(pos) {
             playSound(explosionSound);
-            const count = 45; const geoExp = new THREE.BufferGeometry();
+            const count = 55; const geoExp = new THREE.BufferGeometry();
             const positions = []; const velocities = [];
             for (let i = 0; i < count; i++) {
                 positions.push(pos.x, pos.y, pos.z);
@@ -368,8 +384,7 @@
             bullet.position.copy(worldPos);
             
             const straightDir = new THREE.Vector3(0, 0, -1).normalize();
-            
-            bullet.userData = { direction: straightDir, speed: 450 };
+            bullet.userData = { direction: straightDir, speed: 460 };
             scene.add(bullet); playerBullets.push(bullet);
         }
         
@@ -380,12 +395,9 @@
             
             const playerWorldPos = new THREE.Vector3(); player.getWorldPosition(playerWorldPos);
             const dir = new THREE.Vector3().subVectors(playerWorldPos, enemyMesh.position);
-            
-            // Los enemigos barren en el eje Y vertical
-            dir.y += (Math.random() - 0.5) * 45; 
+            dir.y += (Math.random() - 0.5) * 55; 
             dir.normalize();
-            
-            eLaser.userData = { direction: dir, speed: 190 };
+            eLaser.userData = { direction: dir, speed: 195 };
             scene.add(eLaser); enemyBullets.push(eLaser);
         }
         
@@ -438,6 +450,15 @@
             resetGame();
         });
         
+        const pauseBtn = document.getElementById('pause-btn');
+        pauseBtn.addEventListener('click', () => {
+            if (!gameActive) return;
+            isPaused = !isPaused;
+            if (!isPaused) bgMusic.play().catch(()=>{});
+            else bgMusic.pause();
+            pauseBtn.textContent = isPaused ? "▶ REANUDAR" : "⏸ PAUSA";
+        });
+        
         const keys = {};
         window.addEventListener('keydown', (e) => {
             keys[e.code] = true;
@@ -448,7 +469,7 @@
         
         createVRMenu(); 
 
-        // ---------- LOOP PRINCIPAL CORREGIDO ----------
+        // ---------- LOOP PRINCIPAL ----------
         let spawnTimer = 0, enemyTimer = 0;
         
         function updateGame() {
@@ -458,11 +479,8 @@
             let accelX = 0, accelY = 0, targetZ = 0;
             
             if (renderer.xr.isPresenting) {
-                // Joystick Izquierdo: Mapeado íntegro para esquive en X (Lateral) e Y (Altura) sin interferencias
                 if (Math.abs(leftStickX) > 0.12) accelX = leftStickX * FLOTATION_ACCEL;
                 if (Math.abs(leftStickY) > 0.12) accelY = -leftStickY * FLOTATION_ACCEL; 
-                
-                // Joystick Derecho (Hacia Arriba): Control de la velocidad de crucero frontal (Z)
                 if (rightStickY < -0.12) targetZ = Math.abs(rightStickY) * 210; 
             } else {
                 if (keys['KeyA']) accelX = -FLOTATION_ACCEL; if (keys['KeyD']) accelX = FLOTATION_ACCEL;
@@ -470,21 +488,17 @@
                 if (keys['ShiftLeft']) targetZ = 130;
             }
             
-            // ¡SINCRO DE FRICCIÓN REPARADA!: Cada eje opera sobre su propia fricción e inercia independiente
             velocityX += accelX; velocityX *= FRICTION; 
             velocityY += accelY; velocityY *= FRICTION;
             velocityZ = THREE.MathUtils.lerp(velocityZ, targetZ, 0.075);
             
-            // TRASLACIÓN CONJUNTA INTEGRAL (La cabina entera y tus ojos se mueven por el mapa)
             userGroup.position.x += velocityX;
             userGroup.position.y += velocityY;
             userGroup.position.z -= (velocityZ * 0.15 + 6); 
             
-            // Límites del cuadrante
             userGroup.position.x = Math.min(8500, Math.max(-8500, userGroup.position.x));
             userGroup.position.y = Math.min(4500, Math.max(-2500, userGroup.position.y));
             
-            // Alabeo estético local inercial de las alas de tu nave
             floatOffset += 0.025;
             player.rotation.z = THREE.MathUtils.lerp(player.rotation.z, -velocityX * 0.045, 0.12);
             player.rotation.x = THREE.MathUtils.lerp(player.rotation.x, velocityY * 0.025, 0.12);
@@ -494,11 +508,10 @@
             
             const playerWorldPos = new THREE.Vector3(); player.getWorldPosition(playerWorldPos);
             
-            // Raycaster óptico desde el visor
+            // Raycaster y retícula reactiva
             const rayOrigin = new THREE.Vector3(); camera.getWorldPosition(rayOrigin);
             const rayDirection = new THREE.Vector3(0, 0, -1).applyQuaternion(userGroup.quaternion).normalize();
             raycaster.set(rayOrigin, rayDirection);
-            
             const enemyMeshes = enemies.map(e => e.mesh);
             const intersects = raycaster.intersectObjects(enemyMeshes, true);
             
@@ -510,7 +523,6 @@
                 crosshair.scale.setScalar(1.0);
             }
             
-            // Reloj de Spawns
             spawnTimer++; enemyTimer++;
             if (spawnTimer >= Math.max(11, 27 - difficulty)) {
                 spawnTimer = 0;
@@ -521,7 +533,7 @@
                 enemyTimer = 0; spawnEnemy();
             }
             
-            // Obstáculos
+            // obstáculos
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 const obs = obstacles[i]; obs.position.z += 28;
                 if (obs.position.distanceTo(playerWorldPos) < 115) {
@@ -531,7 +543,7 @@
                 }
             }
             
-            // Enemigos
+            // enemigos
             for (let i = enemies.length - 1; i >= 0; i--) {
                 const e = enemies[i]; e.mesh.position.z += e.speed;
                 e.mesh.position.x += (playerWorldPos.x - e.mesh.position.x) * 0.0035;
@@ -547,7 +559,7 @@
                 }
             }
             
-            // Balas propias
+            // balas propias
             for (let i = playerBullets.length - 1; i >= 0; i--) {
                 const b = playerBullets[i];
                 b.position.x += b.userData.direction.x * b.userData.speed * 0.016;
@@ -567,7 +579,7 @@
                 }
             }
             
-            // Balas enemigas
+            // balas enemigas
             for (let i = enemyBullets.length - 1; i >= 0; i--) {
                 const eb = enemyBullets[i];
                 eb.position.x += eb.userData.direction.x * eb.userData.speed * 0.018;
