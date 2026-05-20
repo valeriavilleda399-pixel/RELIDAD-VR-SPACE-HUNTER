@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Space Hunter VR - Cabina Unificada 360° | Valeria Abigail Villeda Hernández</title>
+    <title>Space Hunter VR - Red Squadron | Valeria Abigail Villeda Hernández</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', 'Courier New', monospace; }
@@ -93,16 +93,16 @@
 
     <div id="start-screen">
         <div class="start-card">
-            <div class="vr-badge">🥽 META QUEST 3 · PERSPECTIVA FLOTANTE VR 🥽</div>
+            <div class="vr-badge">🥽 META QUEST 3 · PERSPECTIVA UNIFICADA 🥽</div>
             <h1 class="game-title">SPACE HUNTER VR</h1>
             <p style="color:#0cf;">Tercera persona integrada con Menú Háptico Inmersivo</p>
             
             <div class="controls-vr">
                 <h3>🎮 CONTROLES INTEGRALES VR</h3>
-                <p><span class="vr-icon">🕹️ JOYSTICK IZQ</span> → Traslación inercial unificada (X / Y)</p>
+                <p><span class="vr-icon">🕹️ JOYSTICK IZQ</span> → Traslación inercial de la cabina (X / Y)</p>
                 <p><span class="vr-icon">🕹️ JOYSTICK DER</span> → Giro de orientación 360° (X) + Velocidad Z (Y)</p>
                 <p><span class="vr-icon">🔫 GATILLO</span> → Disparar láser / Presionar REINICIAR en Menú VR</p>
-                <p><span class="vr-icon">🥽 PERSPECTIVA</span> → Posición fija por detrás de la nave</p>
+                <p><span class="vr-icon">🥽 PERSPECTIVA</span> → Posición fija en la parte trasera de la nave</p>
             </div>
             
             <button class="start-btn" id="start-btn">🚀 INICIAR MISIÓN VR 🚀</button>
@@ -234,11 +234,11 @@
         }
         player.add(buildShipModel());
         
-        // Ubicada estricta frente al userGroup
+        // Ubicada fija enfrente del userGroup
         player.position.set(0, -12, -45);
         player.rotation.set(0, 0, 0);
         
-        // Posicionamiento de cámara en tercera persona relativa al userGroup
+        // Vista de seguimiento en tercera persona
         camera.position.set(0, 18, 55); 
         camera.lookAt(player.position);
 
@@ -311,7 +311,9 @@
             const enemyBody = new THREE.Mesh(new THREE.CylinderGeometry(20, 26, 44, 12), new THREE.MeshStandardMaterial({ color: 0xdd4422, emissive: 0x441100 }));
             enemyBody.rotation.x = Math.PI / 2; group.add(enemyBody);
             const worldPos = userGroup.position;
-            g.position.set(
+            
+            // CORREGIDO AQUÍ: Se cambió la referencia rota 'g' por 'group' para que no congele el loop
+            group.position.set(
                 worldPos.x + (Math.random() - 0.5) * 4800,
                 worldPos.y + (Math.random() - 0.5) * 3200,
                 worldPos.z - 7000 - Math.random() * 4000
